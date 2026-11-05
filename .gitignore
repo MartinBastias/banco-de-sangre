@@ -147,3 +147,18 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# Archivos (Mac / Windows)
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+ehthumbs.db
+$RECYCLE.BIN/
+
+# VS Code, IntelliJ, etc.
+.vscode/
+.idea/
+*.suo
+*.sln
+*.sw?
