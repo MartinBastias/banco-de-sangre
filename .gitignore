@@ -162,3 +162,8 @@ $RECYCLE.BIN/
 *.suo
 *.sln
 *.sw?
+
+# Base de datos SQLite
+*.sqlite
+*.sqlite3
+*.db
