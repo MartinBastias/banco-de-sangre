@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import Calendar from 'react-calendar';
-import toast, { Toaster } from 'react-hot-toast';
+import { Toaster } from 'react-hot-toast';
+import { useCalendarioCitas } from './useCalendarioCitas';
 import 'react-calendar/dist/Calendar.css';
 import './CalendarioCitas.css';
 
@@ -12,57 +13,23 @@ import './CalendarioCitas.css';
  * @returns {JSX.Element} Interfaz de selección y visualización de disponibilidad.
  */
 function CalendarioCitas() {
-  const [fechaSeleccionada, setFechaSeleccionada] = useState(new Date());
-  const [sede, setSede] = useState('');
-  const [horaSeleccionada, setHoraSeleccionada] = useState('');
-  const [mostrarModal, setMostrarModal] = useState(false);
-
-  const [accionActual, setAccionActual] = useState('crear');
-  const [citaActiva, setCitaActiva] = useState(null);
-
-  const horariosDisponibles = ['09:00', '10:00', '11:30', '14:00', '15:30'];
-
-  /**
-   * Maneja la selección de una nueva fecha en el calendario y reinicia el bloque horario.
-   * 
-   * @param {Date} nuevaFecha - Objeto Date seleccionado por el usuario.
-   */
-  const manejarCambioDeFecha = (nuevaFecha) => {
-    setFechaSeleccionada(nuevaFecha);
-    setHoraSeleccionada('');
-  };
-
-  /**
-   * Simula la petición a la API para procesar la creación, edición o cancelación de la cita,
-   * y muestra la notificación correspondiente.
-   */
-  const confirmarCita = async () => {
-    if (accionActual === 'cancelar') {
-      toast.success('Cita cancelada con éxito', { style: { background: '#333', color: '#fff' } });
-      setCitaActiva(null);
-      setAccionActual('crear');
-    } else {
-      toast.success(accionActual === 'editar' ? '¡Cita reagendada con éxito!' : '¡Cita agendada con éxito!', {
-        style: { background: '#333', color: '#fff' }
-      });
-      setCitaActiva({ sede, fechaSeleccionada, horaSeleccionada });
-      setAccionActual('crear');
-    }
-    
-    setMostrarModal(false);
-    setSede('');
-    setHoraSeleccionada('');
-  };
-
-  /**
-   * Configura la acción a realizar y despliega el modal de confirmación correspondiente.
-   * 
-   * @param {string} accion - Tipo de acción ('crear', 'editar', 'cancelar').
-   */
-  const abrirModal = (accion) => {
-    setAccionActual(accion);
-    setMostrarModal(true);
-  };
+  const {
+    fechaSeleccionada,
+    setFechaSeleccionada,
+    sede,
+    setSede,
+    horaSeleccionada,
+    setHoraSeleccionada,
+    mostrarModal,
+    setMostrarModal,
+    accionActual,
+    setAccionActual,
+    citaActiva,
+    horariosDisponibles,
+    manejarCambioDeFecha,
+    confirmarCita,
+    abrirModal
+  } = useCalendarioCitas();
 
   return (
     <>
@@ -74,7 +41,7 @@ function CalendarioCitas() {
           <div style={{ background: '#111', padding: '15px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #444' }}>
             <h3 style={{ marginTop: 0 }}>Tu Cita Activa</h3>
             <p><strong>Sede:</strong> {citaActiva.sede === 'cpp' ? 'Sede Concepción' : citaActiva.sede === 'spp' ? 'Sede San Pedro de la Paz' : ''}</p>
-            <p><strong>Fecha:</strong> {citaActiva.fechaSeleccionada.toLocaleDateString()}</p>
+            <p><strong>Fecha:</strong> {citaActiva.fechaSeleccionada.toLocaleDateString('es-CL')}</p>
             <p><strong>Hora:</strong> {citaActiva.horaSeleccionada}</p>
             
             <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
@@ -116,10 +83,11 @@ function CalendarioCitas() {
             <Calendar 
               onChange={manejarCambioDeFecha} 
               value={fechaSeleccionada} 
+              minDate={new Date()}
             />
             
             <div style={{ marginTop: '20px' }}>
-              <p>Horarios para el {fechaSeleccionada.toLocaleDateString()}:</p>
+              <p>Horarios para el {fechaSeleccionada.toLocaleDateString('es-CL')}:</p>
               <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '10px' }}>
                 {horariosDisponibles.map((hora) => (
                   <button 
@@ -168,11 +136,11 @@ function CalendarioCitas() {
             <h3>{accionActual === 'cancelar' ? 'Cancelar Cita' : 'Resumen de tu Cita'}</h3>
             
             {accionActual === 'cancelar' ? (
-              <p>¿Estás seguro de que deseas cancelar tu cita para el <strong>{citaActiva?.fechaSeleccionada.toLocaleDateString()}</strong> a las <strong>{citaActiva?.horaSeleccionada}</strong>?</p>
+              <p>¿Estás seguro de que deseas cancelar tu cita para el <strong>{citaActiva?.fechaSeleccionada.toLocaleDateString('es-CL')}</strong> a las <strong>{citaActiva?.horaSeleccionada}</strong>?</p>
             ) : (
               <>
                 <p><strong>Sede:</strong> {sede === 'cpp' ? 'Sede Concepción' : sede === 'spp' ? 'Sede San Pedro de la Paz' : ''}</p>
-                <p><strong>Fecha:</strong> {fechaSeleccionada.toLocaleDateString()}</p>
+                <p><strong>Fecha:</strong> {fechaSeleccionada.toLocaleDateString('es-CL')}</p>
                 <p><strong>Hora:</strong> {horaSeleccionada}</p>
               </>
             )}

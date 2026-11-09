@@ -58,6 +58,20 @@
   color: white;
 }
 
+/* Botones de navegación deshabilitados (flechas) */
+.react-calendar__navigation button:disabled {
+  background-color: transparent !important;
+  color: #555 !important;
+  cursor: not-allowed;
+}
+
+/* Días deshabilitados (fechas pasadas) */
+.react-calendar__tile:disabled {
+  background-color: transparent !important;
+  color: #555 !important;
+  cursor: not-allowed;
+}
+
 /* --- Estilos para el Modal de Confirmación --- */
 .modal-overlay {
   position: fixed;
