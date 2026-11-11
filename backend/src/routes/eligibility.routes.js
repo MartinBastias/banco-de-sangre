@@ -1,12 +1,13 @@
-const express = require('express');
+import express from 'express';
+import { verificarElegibilidad } from '../services/eligibility.service.js';
+
 const router = express.Router();
-const { verificarElegibilidad } = require('../services/eligibility.service');
 
 router.post('/verificar-elegibilidad', (req, res) => {
     const { sexo, estadoMedico, ultimaDonacion, fechaFinDiferimiento } = req.body;
 
-    // Validación basica datos necesarios
-    if(!sexo || !estadoMedico) {
+    // Validación básica de datos necesarios
+    if (!sexo || !estadoMedico) {
         return res.status(400).json({
             error: 'Los campos "sexo" y "estadoMedico" son obligatorios para verificar elegibilidad.'
         }); 
@@ -22,4 +23,4 @@ router.post('/verificar-elegibilidad', (req, res) => {
     return res.status(200).json(resultado);
 });
 
-module.exports = router;
+export default router;

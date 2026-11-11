@@ -65,16 +65,41 @@ export const useCalendarioCitas = () => {
   };
 
   /**
-   * Simula la petición a la API para procesar la creación, edición o cancelación de la cita,
+   * Realiza la petición a la API para procesar la creación, edición o cancelación de la cita,
    * y muestra la notificación correspondiente. Antes de crear o reagendar, valida que el
    * bloque horario seleccionado no haya transcurrido.
    */
   const confirmarCita = async () => {
+    // RUT temporal para probar la conexión. Posteriormente se obtendrá del usuario autenticado.
+    const rutPrueba = '11111111-1';
+
     if (accionActual === 'cancelar') {
-      toast.success('Cita cancelada con éxito');
-      setCitaActiva(null);
-      setAccionActual('crear');
+      try {
+        const respuesta = await fetch(`http://localhost:3000/api/citas/${citaActiva.id}`, {
+          method: 'DELETE',
+        });
+        
+        if (!respuesta.ok) {
+          const errorData = await respuesta.json();
+          throw new Error(errorData.error || 'Error al cancelar la cita');
+        }
+
+        toast.success('Cita cancelada con éxito');
+        setCitaActiva(null);
+        setAccionActual('crear');
+      } catch (error) {
+        toast.error(error.message);
+      }
     } else {
+      const esEdicion = accionActual === 'editar';
+
+      // Reagendar siempre debe actualizar la cita original; sin su ID no se debe crear otra.
+      if (esEdicion && !citaActiva?.id) {
+        toast.error('No se encontró la cita a reagendar.');
+        setMostrarModal(false);
+        return;
+      }
+
       // Validación de negocio: no se permite agendar un bloque horario que ya transcurrió.
       if (esHoraPasada(fechaSeleccionada, horaSeleccionada)) {
         toast.error('Esa hora ya pasó. Por favor, selecciona un horario aún disponible.');
@@ -83,9 +108,47 @@ export const useCalendarioCitas = () => {
         return;
       }
 
-      toast.success(accionActual === 'editar' ? '¡Cita reagendada con éxito!' : '¡Cita agendada con éxito!');
-      setCitaActiva({ sede, fechaSeleccionada, horaSeleccionada });
-      setAccionActual('crear');
+      // Ajuste de zona horaria local para evitar desfases al convertir a formato YYYY-MM-DD
+      const offset = fechaSeleccionada.getTimezoneOffset() * 60000;
+      const fechaLocal = new Date(fechaSeleccionada.getTime() - offset);
+      
+      const payload = {
+        rut: rutPrueba,
+        sede,
+        fecha: fechaLocal.toISOString().split('T')[0],
+        hora: horaSeleccionada
+      };
+
+      try {
+        const url = esEdicion
+          ? `http://localhost:3000/api/citas/${citaActiva.id}` 
+          : 'http://localhost:3000/api/citas';
+        
+        const respuesta = await fetch(url, {
+          method: esEdicion ? 'PUT' : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const datos = await respuesta.json();
+
+        if (!respuesta.ok) {
+          throw new Error(datos.error || 'Error al procesar la cita');
+        }
+
+        toast.success(esEdicion ? '¡Cita reagendada con éxito!' : '¡Cita agendada con éxito!');
+        
+        // Se preserva la cita activa incluyendo el ID real retornado por la base de datos
+        setCitaActiva({ 
+          id: esEdicion ? citaActiva.id : datos.cita.id, 
+          sede, 
+          fechaSeleccionada, 
+          horaSeleccionada 
+        });
+        setAccionActual('crear');
+      } catch (error) {
+        toast.error(error.message);
+      }
     }
     
     setMostrarModal(false);
