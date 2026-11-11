@@ -1,4 +1,3 @@
-import React from 'react';
 import Calendar from 'react-calendar';
 import { Toaster } from 'react-hot-toast';
 import { useCalendarioCitas } from './useCalendarioCitas';
@@ -15,7 +14,6 @@ import './CalendarioCitas.css';
 function CalendarioCitas() {
   const {
     fechaSeleccionada,
-    setFechaSeleccionada,
     sede,
     setSede,
     horaSeleccionada,
@@ -26,7 +24,9 @@ function CalendarioCitas() {
     setAccionActual,
     citaActiva,
     horariosDisponibles,
+    esHoraBloqueada,
     manejarCambioDeFecha,
+    manejarReagendamiento,
     confirmarCita,
     abrirModal
   } = useCalendarioCitas();
@@ -52,12 +52,7 @@ function CalendarioCitas() {
                 Cancelar Cita
               </button>
               <button 
-                onClick={() => { 
-                  setAccionActual('editar'); 
-                  setSede(citaActiva.sede); 
-                  setHoraSeleccionada(citaActiva.horaSeleccionada); 
-                  setFechaSeleccionada(citaActiva.fechaSeleccionada); 
-                }} 
+                onClick={manejarReagendamiento}
                 style={{ flex: 1, padding: '10px', background: '#ffc107', color: 'black', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}
               >
                 Reagendar
@@ -88,24 +83,37 @@ function CalendarioCitas() {
             
             <div style={{ marginTop: '20px' }}>
               <p>Horarios para el {fechaSeleccionada.toLocaleDateString('es-CL')}:</p>
-              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '10px' }}>
-                {horariosDisponibles.map((hora) => (
-                  <button 
-                    key={hora}
-                    onClick={() => setHoraSeleccionada(hora)}
-                    style={{
-                      padding: '8px 16px',
-                      borderRadius: '6px',
-                      border: '1px solid #1a73e8',
-                      background: horaSeleccionada === hora ? '#1a73e8' : 'transparent',
-                      color: 'white',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    {hora}
-                  </button>
-                ))}
-              </div>
+              {horariosDisponibles.every((hora) => esHoraBloqueada(hora)) ? (
+                <p style={{ color: '#ff6b6b', marginTop: '10px' }}>
+                  No quedan horarios disponibles para este día. Por favor, selecciona otra fecha.
+                </p>
+              ) : (
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '10px' }}>
+                  {horariosDisponibles.map((hora) => {
+                    const bloqueada = esHoraBloqueada(hora);
+
+                    return (
+                      <button 
+                        key={hora}
+                        onClick={() => setHoraSeleccionada(hora)}
+                        disabled={bloqueada}
+                        title={bloqueada ? 'Este horario ya pasó' : undefined}
+                        style={{
+                          padding: '8px 16px',
+                          borderRadius: '6px',
+                          border: `1px solid ${bloqueada ? '#555' : '#1a73e8'}`,
+                          background: !bloqueada && horaSeleccionada === hora ? '#1a73e8' : 'transparent',
+                          color: bloqueada ? '#555' : 'white',
+                          cursor: bloqueada ? 'not-allowed' : 'pointer',
+                          textDecoration: bloqueada ? 'line-through' : 'none'
+                        }}
+                      >
+                        {hora}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {sede && horaSeleccionada && (
