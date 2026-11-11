@@ -4,7 +4,7 @@
  * @param {*} sexo - 'M' (Masculino) o 'F' (Femenino)
  * @returns Fecha en formato YYYY-MM-DD (Mas fácil si queremos comparar)
  */
-function calcularProximaFechaHabil(ultimaDonacion, sexo) {
+export function calcularProximaFechaHabil(ultimaDonacion, sexo) {
     if(!ultimaDonacion) return null;
     
     // Destacar que se ocupa horario universal para evitar desfases al pasar a horario chileno!
@@ -23,7 +23,7 @@ function calcularProximaFechaHabil(ultimaDonacion, sexo) {
  * @param {string} fechaReferencia - Fecha Actual 'YYYY-MM-DD' (lo usamos para tests) 
  * @returns - Estado de elegibilidad del donante en forma de enum
  */
-function verificarElegibilidad(donante, fechaReferencia = null) {
+export function verificarElegibilidad(donante, fechaReferencia = null) {
     const hoy = fechaReferencia || new Date().toISOString().split('T')[0];
 
     // Valida bloqueo permanente
@@ -61,7 +61,7 @@ function verificarElegibilidad(donante, fechaReferencia = null) {
         return {
             habilitado: false,
             estado: 'Inhabilitado',
-            motivo: "El donante se encuentra en periodo de espera biológica (${donante.sexo === 'M' ? '3 meses' : '4 meses'})",
+            motivo: `El donante se encuentra en periodo de espera biológica (${donante.sexo === 'M' ? '3 meses' : '4 meses'})`,
             proximaFechaHabil: fechaBiologica,
         };
     }
@@ -74,9 +74,3 @@ function verificarElegibilidad(donante, fechaReferencia = null) {
         proximaFechaHabil: fechaBiologica || hoy
     };
 }
-
-// Exportar funciones para usar en endpoints
-module.exports = {
-    calcularProximaFechaHabil,
-    verificarElegibilidad
-};
