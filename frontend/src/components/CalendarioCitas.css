@@ -1,11 +1,215 @@
-/* --- Estilos para adaptar el calendario al Modo Oscuro --- */
+/* --- Estilos de la agenda (compatibles con modo claro y oscuro) --- */
 
-/* Contenedor principal del calendario */
+.agenda {
+  padding: 20px;
+  max-width: 400px;
+  margin: 0 auto;
+  color: var(--text);
+}
+
+/* Tarjeta de la cita activa */
+.cita-activa {
+  background: var(--surface-2);
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border: 1px solid var(--border);
+}
+
+.cita-activa h3 {
+  margin-top: 0;
+}
+
+/* Botones genéricos */
+.btn {
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-h);
+  font: inherit;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.btn--flex-1 {
+  flex: 1;
+}
+
+.btn--flex-2 {
+  flex: 2;
+}
+
+.btn--danger-outline {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+.btn--danger-outline:hover {
+  background: var(--danger-bg);
+}
+
+.btn--neutral-outline {
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.btn--neutral-outline:hover {
+  background: var(--surface-hover);
+}
+
+.btn--warning {
+  background: var(--warning);
+  color: var(--warning-text);
+  font-weight: bold;
+}
+
+.btn--warning:hover {
+  filter: brightness(0.95);
+}
+
+.btn--success {
+  padding: 12px;
+  background: var(--success);
+  color: #fff;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.btn--success:hover {
+  filter: brightness(1.08);
+}
+
+.btn--primary {
+  background: var(--primary);
+  color: var(--primary-text);
+  font-weight: bold;
+}
+
+.btn--primary:hover {
+  background: var(--primary-hover);
+}
+
+.btn--danger-solid {
+  background: var(--danger-solid);
+  color: #fff;
+  font-weight: bold;
+}
+
+.btn--danger-solid:hover {
+  filter: brightness(1.08);
+}
+
+/* Acciones */
+.acciones {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.acciones--finales {
+  margin-top: 30px;
+}
+
+.acciones--modal {
+  margin-top: 25px;
+}
+
+/* Formulario de sede */
+.campo-sede {
+  margin-bottom: 20px;
+}
+
+.campo-sede label {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.select-sede {
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text-h);
+  border: 1px solid var(--border);
+  font: inherit;
+}
+
+.select-sede:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+}
+
+.texto-dia {
+  margin-bottom: 8px;
+}
+
+/* Horarios */
+.horarios-titulo {
+  margin-top: 20px;
+}
+
+.aviso-sin-horarios {
+  color: var(--danger);
+  margin-top: 10px;
+}
+
+.horarios {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.horario {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: 1px solid var(--primary);
+  background: transparent;
+  color: var(--text-h);
+  font: inherit;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.horario:hover:not(:disabled) {
+  background: var(--surface-hover);
+}
+
+.horario--seleccionado {
+  background: var(--primary);
+  color: var(--primary-text);
+}
+
+.horario--seleccionado:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+
+.horario:disabled {
+  border-color: var(--border);
+  background: transparent;
+  color: var(--text-disabled);
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+
+.horario:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* --- Calendario (react-calendar) --- */
+
 .react-calendar {
-  background-color: #242424; 
-  color: white;
-  border: 1px solid #444; 
-  border-radius: 10px;    
+  background-color: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
   padding: 10px;
   font-family: inherit;
   width: 100%;
@@ -13,7 +217,7 @@
 
 /* Botones de navegación (meses, años) */
 .react-calendar__navigation button {
-  color: white;
+  color: var(--text-h);
   min-width: 44px;
   background: none;
   font-size: 16px;
@@ -22,64 +226,91 @@
 
 .react-calendar__navigation button:enabled:hover,
 .react-calendar__navigation button:enabled:focus {
-  background-color: #3a3a3a;
+  background-color: var(--surface-hover);
 }
 
-/* Días de la semana y texto base */
+/* Días de la semana */
+.react-calendar__month-view__weekdays {
+  color: var(--text-muted);
+}
+
+.react-calendar__month-view__weekdays abbr {
+  text-decoration: none;
+}
+
+/* Días y texto base */
 .react-calendar__tile {
-  color: white;
+  color: var(--text);
   padding: 10px 6px;
   border-radius: 6px;
-}
-
-/* Días del fin de semana (rojo más suave) */
-.react-calendar__month-view__days__day--weekend {
-  color: #ff6b6b; 
 }
 
 /* Efecto al pasar el mouse por encima de un día */
 .react-calendar__tile:enabled:hover,
 .react-calendar__tile:enabled:focus {
-  background-color: #3a3a3a;
+  background-color: var(--surface-hover);
+}
+
+/* Días del fin de semana */
+.react-calendar__month-view__days__day--weekend {
+  color: var(--danger);
+}
+
+/* Días de meses vecinos */
+.react-calendar__month-view__days__day--neighboringMonth {
+  color: var(--text-disabled);
 }
 
 /* Día actual (hoy) */
 .react-calendar__tile--now {
-  background: #444;
+  background: var(--surface-3);
 }
+
 .react-calendar__tile--now:enabled:hover,
 .react-calendar__tile--now:enabled:focus {
-  background: #555;
+  background: var(--surface-hover);
 }
 
 /* Día seleccionado */
-.react-calendar__tile--active {
-  background: #1a73e8 !important; 
-  color: white;
+.react-calendar__tile--active,
+.react-calendar__tile--active:enabled:hover,
+.react-calendar__tile--active:enabled:focus {
+  background: var(--primary) !important;
+  color: var(--primary-text) !important;
+}
+
+/* Vista de mes/año con día activo */
+.react-calendar__tile--hasActive,
+.react-calendar__tile--hasActive:enabled:hover,
+.react-calendar__tile--hasActive:enabled:focus {
+  background: var(--accent-bg);
+  color: var(--text-h);
 }
 
 /* Botones de navegación deshabilitados (flechas) */
 .react-calendar__navigation button:disabled {
-  background-color: transparent !important;
-  color: #555 !important;
+  background-color: transparent;
+  color: var(--text-disabled);
   cursor: not-allowed;
 }
 
 /* Días deshabilitados (fechas pasadas) */
-.react-calendar__tile:disabled {
-  background-color: transparent !important;
-  color: #555 !important;
+.react-calendar__tile:disabled,
+.react-calendar__month-view__days__day--neighboringMonth:disabled {
+  background-color: transparent;
+  color: var(--text-disabled);
   cursor: not-allowed;
 }
 
 /* --- Estilos para el Modal de Confirmación --- */
+
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.55);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -87,18 +318,18 @@
 }
 
 .modal-content {
-  background: #242424;
+  background: var(--surface);
   padding: 24px;
   border-radius: 8px;
-  border: 1px solid #444;
+  border: 1px solid var(--border);
   width: 90%;
   max-width: 400px;
-  color: white;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+  color: var(--text);
+  box-shadow: var(--shadow);
 }
 
 .modal-content h3 {
   margin-top: 0;
-  border-bottom: 1px solid #444;
+  border-bottom: 1px solid var(--border);
   padding-bottom: 10px;
 }
