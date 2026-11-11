@@ -71,23 +71,19 @@ export const useCalendarioCitas = () => {
    */
   const confirmarCita = async () => {
     if (accionActual === 'cancelar') {
-      toast.success('Cita cancelada con éxito', { style: { background: '#333', color: '#fff' } });
+      toast.success('Cita cancelada con éxito');
       setCitaActiva(null);
       setAccionActual('crear');
     } else {
       // Validación de negocio: no se permite agendar un bloque horario que ya transcurrió.
       if (esHoraPasada(fechaSeleccionada, horaSeleccionada)) {
-        toast.error('Esa hora ya pasó. Por favor, selecciona un horario aún disponible.', {
-          style: { background: '#333', color: '#fff' }
-        });
+        toast.error('Esa hora ya pasó. Por favor, selecciona un horario aún disponible.');
         setHoraSeleccionada('');
         setMostrarModal(false);
         return;
       }
 
-      toast.success(accionActual === 'editar' ? '¡Cita reagendada con éxito!' : '¡Cita agendada con éxito!', {
-        style: { background: '#333', color: '#fff' }
-      });
+      toast.success(accionActual === 'editar' ? '¡Cita reagendada con éxito!' : '¡Cita agendada con éxito!');
       setCitaActiva({ sede, fechaSeleccionada, horaSeleccionada });
       setAccionActual('crear');
     }

@@ -33,27 +33,36 @@ function CalendarioCitas() {
 
   return (
     <>
-      <Toaster position="top-right" />
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          style: {
+            background: 'var(--surface-2)',
+            color: 'var(--text-h)',
+            border: '1px solid var(--border)'
+          }
+        }}
+      />
       
-      <div style={{ padding: '20px', maxWidth: '400px', margin: '0 auto', color: 'white' }}>
+      <div className="agenda">
         
         {citaActiva && accionActual !== 'editar' ? (
-          <div style={{ background: '#111', padding: '15px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #444' }}>
-            <h3 style={{ marginTop: 0 }}>Tu Cita Activa</h3>
+          <div className="cita-activa">
+            <h3>Tu Cita Activa</h3>
             <p><strong>Sede:</strong> {citaActiva.sede === 'cpp' ? 'Sede Concepción' : citaActiva.sede === 'spp' ? 'Sede San Pedro de la Paz' : ''}</p>
             <p><strong>Fecha:</strong> {citaActiva.fechaSeleccionada.toLocaleDateString('es-CL')}</p>
             <p><strong>Hora:</strong> {citaActiva.horaSeleccionada}</p>
             
-            <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
+            <div className="acciones">
               <button 
                 onClick={() => abrirModal('cancelar')} 
-                style={{ flex: 1, padding: '10px', background: 'transparent', color: '#dc3545', border: '1px solid #dc3545', borderRadius: '6px', cursor: 'pointer' }}
+                className="btn btn--flex-1 btn--danger-outline"
               >
                 Cancelar Cita
               </button>
               <button 
                 onClick={manejarReagendamiento}
-                style={{ flex: 1, padding: '10px', background: '#ffc107', color: 'black', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}
+                className="btn btn--flex-1 btn--warning"
               >
                 Reagendar
               </button>
@@ -61,12 +70,13 @@ function CalendarioCitas() {
           </div>
         ) : (
           <>
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', marginBottom: '8px' }}>Selecciona una sede:</label>
+            <div className="campo-sede">
+              <label htmlFor="sede">Selecciona una sede:</label>
               <select 
+                id="sede"
                 value={sede} 
                 onChange={(e) => setSede(e.target.value)}
-                style={{ width: '100%', padding: '10px', borderRadius: '6px', background: '#242424', color: 'white', border: '1px solid #444' }}
+                className="select-sede"
               >
                 <option value="">-- Elige una sede --</option>
                 <option value="cpp">Sede Concepción</option>
@@ -74,23 +84,24 @@ function CalendarioCitas() {
               </select>
             </div>
 
-            <p style={{ marginBottom: '8px' }}>Selecciona un día:</p>
+            <p className="texto-dia">Selecciona un día:</p>
             <Calendar 
               onChange={manejarCambioDeFecha} 
               value={fechaSeleccionada} 
               minDate={new Date()}
             />
             
-            <div style={{ marginTop: '20px' }}>
+            <div className="horarios-titulo">
               <p>Horarios para el {fechaSeleccionada.toLocaleDateString('es-CL')}:</p>
               {horariosDisponibles.every((hora) => esHoraBloqueada(hora)) ? (
-                <p style={{ color: '#ff6b6b', marginTop: '10px' }}>
+                <p className="aviso-sin-horarios">
                   No quedan horarios disponibles para este día. Por favor, selecciona otra fecha.
                 </p>
               ) : (
-                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '10px' }}>
+                <div className="horarios">
                   {horariosDisponibles.map((hora) => {
                     const bloqueada = esHoraBloqueada(hora);
+                    const seleccionada = !bloqueada && horaSeleccionada === hora;
 
                     return (
                       <button 
@@ -98,15 +109,7 @@ function CalendarioCitas() {
                         onClick={() => setHoraSeleccionada(hora)}
                         disabled={bloqueada}
                         title={bloqueada ? 'Este horario ya pasó' : undefined}
-                        style={{
-                          padding: '8px 16px',
-                          borderRadius: '6px',
-                          border: `1px solid ${bloqueada ? '#555' : '#1a73e8'}`,
-                          background: !bloqueada && horaSeleccionada === hora ? '#1a73e8' : 'transparent',
-                          color: bloqueada ? '#555' : 'white',
-                          cursor: bloqueada ? 'not-allowed' : 'pointer',
-                          textDecoration: bloqueada ? 'line-through' : 'none'
-                        }}
+                        className={`horario${seleccionada ? ' horario--seleccionado' : ''}`}
                       >
                         {hora}
                       </button>
@@ -117,17 +120,17 @@ function CalendarioCitas() {
             </div>
 
             {sede && horaSeleccionada && (
-              <div style={{ display: 'flex', gap: '10px', marginTop: '30px' }}>
+              <div className="acciones acciones--finales">
                 {accionActual === 'editar' && (
                   <button 
-                    style={{ flex: 1, padding: '12px', background: 'transparent', color: 'white', border: '1px solid #6c757d', borderRadius: '6px', cursor: 'pointer' }}
+                    className="btn btn--flex-1 btn--neutral-outline"
                     onClick={() => { setAccionActual('crear'); setSede(''); setHoraSeleccionada(''); }}
                   >
                     Volver
                   </button>
                 )}
                 <button 
-                  style={{ flex: 2, padding: '12px', background: '#28a745', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold' }}
+                  className="btn btn--flex-2 btn--success"
                   onClick={() => abrirModal(accionActual)}
                 >
                   {accionActual === 'editar' ? 'Confirmar Reagendamiento' : 'Agendar Cita'}
@@ -153,16 +156,16 @@ function CalendarioCitas() {
               </>
             )}
             
-            <div style={{ display: 'flex', gap: '10px', marginTop: '25px' }}>
+            <div className="acciones acciones--modal">
               <button 
                 onClick={() => setMostrarModal(false)} 
-                style={{ flex: 1, padding: '10px', background: 'transparent', color: 'white', border: '1px solid #6c757d', borderRadius: '6px', cursor: 'pointer' }}
+                className="btn btn--flex-1 btn--neutral-outline"
               >
                 {accionActual === 'cancelar' ? 'Volver' : 'Cancelar'}
               </button>
               <button 
                 onClick={confirmarCita} 
-                style={{ flex: 1, padding: '10px', background: accionActual === 'cancelar' ? '#dc3545' : '#1a73e8', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}
+                className={`btn btn--flex-1 ${accionActual === 'cancelar' ? 'btn--danger-solid' : 'btn--primary'}`}
               >
                 {accionActual === 'cancelar' ? 'Sí, Cancelar' : 'Confirmar Reserva'}
               </button>
