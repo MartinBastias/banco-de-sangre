@@ -1,4 +1,3 @@
-import React from 'react';
 import CalendarioCitas from './components/CalendarioCitas';
 import './App.css';
 
