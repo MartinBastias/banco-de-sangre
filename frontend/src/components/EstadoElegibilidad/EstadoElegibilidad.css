@@ -1,0 +1,108 @@
+.tarjeta-elegibilidad {
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 20px;
+  padding: 18px;
+  border: 1px solid #444;
+  border-radius: 10px;
+  background: #242424;
+  color: #f5f5f5;
+  text-align: left;
+}
+
+.tarjeta-elegibilidad__encabezado {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tarjeta-elegibilidad__antetitulo {
+  margin: 0 0 4px;
+  color: #b7b7b7;
+  font-size: 13px;
+}
+
+.tarjeta-elegibilidad h2,
+.tarjeta-elegibilidad__titulo {
+  margin: 0;
+  color: inherit;
+  font-size: 19px;
+  letter-spacing: 0;
+}
+
+.tarjeta-elegibilidad__estado {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #3a3a3a;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.tarjeta-elegibilidad__fecha {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 16px;
+}
+
+.tarjeta-elegibilidad__etiqueta-fecha {
+  color: #b7b7b7;
+  font-size: 13px;
+}
+
+.tarjeta-elegibilidad__fecha strong {
+  font-size: 17px;
+}
+
+.tarjeta-elegibilidad__mensaje {
+  margin-top: 12px;
+  color: #dedede;
+  font-size: 14px;
+}
+
+/* Estados con borde lateral de color para indicar resultado (sin línea amarilla para pendiente) */
+.tarjeta-elegibilidad--apto,
+.tarjeta-elegibilidad--habilitado {
+  border-left: 4px solid #3cb878;
+}
+
+.tarjeta-elegibilidad--apto .tarjeta-elegibilidad__estado,
+.tarjeta-elegibilidad--habilitado .tarjeta-elegibilidad__estado {
+  background: #173c2a;
+  color: #8ce2b2;
+}
+
+.tarjeta-elegibilidad--diferido,
+.tarjeta-elegibilidad--no-apto,
+.tarjeta-elegibilidad--inhabilitado {
+  border-left: 4px solid #e66c6c;
+}
+
+.tarjeta-elegibilidad--diferido .tarjeta-elegibilidad__estado,
+.tarjeta-elegibilidad--no-apto .tarjeta-elegibilidad__estado,
+.tarjeta-elegibilidad--inhabilitado .tarjeta-elegibilidad__estado {
+  background: #492626;
+  color: #ffaaaa;
+}
+
+/* Estado pendiente: sin línea izquierda amarilla */
+.tarjeta-elegibilidad--pendiente {
+  border-left: none;
+}
+
+.tarjeta-elegibilidad--pendiente .tarjeta-elegibilidad__estado {
+  background: #44391c;
+  color: #f2d27d;
+}
+
+@media (max-width: 480px) {
+  .tarjeta-elegibilidad {
+    padding: 15px;
+  }
+
+  .tarjeta-elegibilidad__encabezado {
+    flex-direction: column;
+  }
+}
