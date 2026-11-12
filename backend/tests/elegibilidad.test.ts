@@ -3,7 +3,7 @@ import { describe, it } from 'node:test';
 import type { Request, Response } from 'express';
 import { manejadorVerificarElegibilidad } from '../src/features/elegibilidad/elegibilidad.routes.ts';
 import {
-  calcularProximaFechaHabil,
+  calcularFechaElegibilidadBiologica,
   verificarElegibilidad,
 } from '../src/features/elegibilidad/elegibilidad.service.ts';
 
@@ -28,140 +28,140 @@ function invocarManejador(body: Record<string, unknown>) {
 }
 
 describe('Servicio de Elegibilidad Biológica (RF-03 & RF-05)', () => {
-  describe('Cálculo de próxima fecha hábil (RF-03)', () => {
+  describe('Cálculo de fecha de elegibilidad biológica (RF-03)', () => {
     it('agrega 3 meses a la última donación cuando el donante es Hombre (M)', () => {
-      const result = calcularProximaFechaHabil('2026-06-10', 'M');
-      assert.equal(result, '2026-09-10');
+      const resultado = calcularFechaElegibilidadBiologica('2026-06-10', 'M');
+      assert.equal(resultado, '2026-09-10');
     });
 
     it('agrega 4 meses a la última donación cuando el donante es Mujer (F)', () => {
-      const result = calcularProximaFechaHabil('2026-06-10', 'F');
-      assert.equal(result, '2026-10-10');
+      const resultado = calcularFechaElegibilidadBiologica('2026-06-10', 'F');
+      assert.equal(resultado, '2026-10-10');
     });
 
     it('retorna null cuando el donante no tiene donaciones previas', () => {
-      const result = calcularProximaFechaHabil(null, 'M');
-      assert.equal(result, null);
+      const resultado = calcularFechaElegibilidadBiologica(null, 'M');
+      assert.equal(resultado, null);
     });
   });
 
   describe('Verificación de estado de donante y diferimiento (RF-05)', () => {
     const hoySimulado = '2026-11-10';
 
-    it('retorna Inhabilitado cuando el estado es "No apto permanentemente"', () => {
-      const result = verificarElegibilidad(
+    it('retorna Excluyente cuando el estado clínico es "Excluyente"', () => {
+      const resultado = verificarElegibilidad(
         {
           sexo: 'M',
-          estadoMedico: 'No apto permanentemente',
+          estadoClinico: 'Excluyente',
           ultimaDonacion: '2026-01-01',
         },
         hoySimulado,
       );
 
-      assert.equal(result.habilitado, false);
-      assert.equal(result.estado, 'Inhabilitado');
+      assert.equal(resultado.apto, false);
+      assert.equal(resultado.estadoClinico, 'Excluyente');
       assert.equal(
-        result.motivo,
-        'Debido a test de elegibilidad, el donante ha quedado no apto permanentemente.',
+        resultado.motivo,
+        'Debido a test de elegibilidad, el donante ha quedado en estado Excluyente.',
       );
-      assert.equal(result.proximaFechaHabil, null);
+      assert.equal(resultado.fechaElegibilidad, null);
     });
 
-    it('retorna Inhabilitado cuando el donante se encuentra diferido temporalmente', () => {
-      const result = verificarElegibilidad(
+    it('retorna Diferido temporalmente cuando el donante se encuentra diferido temporalmente', () => {
+      const resultado = verificarElegibilidad(
         {
           sexo: 'F',
-          estadoMedico: 'Diferido temporalmente',
-          fechaFinDiferimiento: '2026-11-20',
+          estadoClinico: 'Diferido temporalmente',
+          fechaElegibilidad: '2026-11-20',
           ultimaDonacion: '2026-01-01',
         },
         hoySimulado,
       );
 
-      assert.equal(result.habilitado, false);
-      assert.equal(result.estado, 'Inhabilitado');
+      assert.equal(resultado.apto, false);
+      assert.equal(resultado.estadoClinico, 'Diferido temporalmente');
       assert.equal(
-        result.motivo,
+        resultado.motivo,
         'El donante se encuentra diferido temporalmente',
       );
-      assert.equal(result.proximaFechaHabil, '2026-11-20');
+      assert.equal(resultado.fechaElegibilidad, '2026-11-20');
     });
 
-    it('retorna Inhabilitado cuando el donante es hombre y no han transcurrido 3 meses', () => {
-      const result = verificarElegibilidad(
+    it('retorna Diferido temporalmente cuando el donante es hombre y no han transcurrido 3 meses', () => {
+      const resultado = verificarElegibilidad(
         {
           sexo: 'M',
-          estadoMedico: 'Apto',
+          estadoClinico: 'Apto',
           ultimaDonacion: '2026-10-01',
         },
         hoySimulado,
       );
 
-      assert.equal(result.habilitado, false);
-      assert.equal(result.estado, 'Inhabilitado');
-      assert.match(result.motivo, /periodo de espera biológica \(3 meses\)/);
-      assert.equal(result.proximaFechaHabil, '2027-01-01');
+      assert.equal(resultado.apto, false);
+      assert.equal(resultado.estadoClinico, 'Diferido temporalmente');
+      assert.match(resultado.motivo, /periodo de espera biológica \(3 meses\)/);
+      assert.equal(resultado.fechaElegibilidad, '2027-01-01');
     });
 
-    it('retorna Habilitado cuando es mujer y han transcurrido más de 4 meses sin restricciones', () => {
-      const result = verificarElegibilidad(
+    it('retorna Apto cuando es mujer y han transcurrido más de 4 meses sin restricciones', () => {
+      const resultado = verificarElegibilidad(
         {
           sexo: 'F',
-          estadoMedico: 'Apto',
+          estadoClinico: 'Apto',
           ultimaDonacion: '2026-06-01',
         },
         hoySimulado,
       );
 
-      assert.equal(result.habilitado, true);
-      assert.equal(result.estado, 'Habilitado');
+      assert.equal(resultado.apto, true);
+      assert.equal(resultado.estadoClinico, 'Apto');
       assert.equal(
-        result.motivo,
+        resultado.motivo,
         'El donante cumple con los requisitos de elegibilidad',
       );
-      assert.equal(result.proximaFechaHabil, '2026-10-01');
+      assert.equal(resultado.fechaElegibilidad, '2026-10-01');
     });
   });
 
   describe('Endpoint POST /api/donantes/verificar-elegibilidad', () => {
-    it('retorna "Inhabilitado" cuando el donante es "No apto permanentemente"', () => {
+    it('retorna "Excluyente" cuando el donante es "Excluyente"', () => {
       const response = invocarManejador({
         sexo: 'M',
-        estadoMedico: 'No apto permanentemente',
+        estadoClinico: 'Excluyente',
       });
 
       assert.equal(response.statusCode, 200);
-      assert.equal(response.body.estado, 'Inhabilitado');
-      assert.equal(response.body.habilitado, false);
+      assert.equal(response.body.estadoClinico, 'Excluyente');
+      assert.equal(response.body.apto, false);
       assert.equal(
         response.body.motivo,
-        'Debido a test de elegibilidad, el donante ha quedado no apto permanentemente.',
+        'Debido a test de elegibilidad, el donante ha quedado en estado Excluyente.',
       );
     });
 
-    it('retorna "Inhabilitado" cuando el donante está diferido temporalmente', () => {
+    it('retorna "Diferido temporalmente" cuando el donante está diferido temporalmente', () => {
       const response = invocarManejador({
         sexo: 'F',
-        estadoMedico: 'Diferido temporalmente',
-        fechaFinDiferimiento: '2026-12-01',
+        estadoClinico: 'Diferido temporalmente',
+        fechaElegibilidad: '2026-12-01',
       });
 
       assert.equal(response.statusCode, 200);
-      assert.equal(response.body.estado, 'Inhabilitado');
-      assert.equal(response.body.habilitado, false);
+      assert.equal(response.body.estadoClinico, 'Diferido temporalmente');
+      assert.equal(response.body.apto, false);
       assert.equal(
         response.body.motivo,
         'El donante se encuentra diferido temporalmente',
       );
-      assert.equal(response.body.proximaFechaHabil, '2026-12-01');
+      assert.equal(response.body.fechaElegibilidad, '2026-12-01');
     });
 
-    it('retorna 400 cuando faltan datos obligatorios (sexo o estadoMedico)', () => {
+    it('retorna 400 cuando faltan datos obligatorios (sexo o estadoClinico)', () => {
       const response = invocarManejador({ sexo: 'M' });
       assert.equal(response.statusCode, 400);
       assert.match(
         String(response.body.error),
-        /Los campos "sexo" y "estadoMedico" son obligatorios/,
+        /Los campos "sexo" y "estadoClinico"/,
       );
     });
   });

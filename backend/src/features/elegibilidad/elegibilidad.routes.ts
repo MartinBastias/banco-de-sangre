@@ -1,35 +1,36 @@
 import { Router, type Request, type Response } from 'express';
+import { normalizarEstadoClinico } from '../ficha-medica/ficha-medica.service.ts';
 import { verificarElegibilidad } from './elegibilidad.service.ts';
 
 const enrutador = Router();
 
 export const manejadorVerificarElegibilidad = (req: Request, res: Response) => {
-  const { sexo, estadoMedico, ultimaDonacion, fechaFinDiferimiento } = (req.body ??
+  const { sexo, estadoClinico, ultimaDonacion, fechaElegibilidad } = (req.body ??
     {}) as {
     sexo?: string;
-    estadoMedico?: string;
+    estadoClinico?: string;
     ultimaDonacion?: string | null;
-    fechaFinDiferimiento?: string | null;
+    fechaElegibilidad?: string | null;
   };
 
-  if (!sexo || !estadoMedico) {
+  const estadoValidado = normalizarEstadoClinico(estadoClinico);
+
+  if (!sexo || !estadoValidado) {
     return res.status(400).json({
       error:
-        'Los campos "sexo" y "estadoMedico" son obligatorios para verificar elegibilidad.',
+        'Los campos "sexo" y "estadoClinico" (Apto, Diferido temporalmente o Excluyente) son obligatorios.',
     });
   }
 
   const resultado = verificarElegibilidad({
     sexo,
-    estadoMedico,
+    estadoClinico: estadoValidado,
     ultimaDonacion: ultimaDonacion || null,
-    fechaFinDiferimiento: fechaFinDiferimiento || null,
+    fechaElegibilidad: fechaElegibilidad || null,
   });
 
   return res.status(200).json(resultado);
 };
-
-export const verifyEligibilityHandler = manejadorVerificarElegibilidad;
 
 enrutador.post('/verificar-elegibilidad', manejadorVerificarElegibilidad);
 

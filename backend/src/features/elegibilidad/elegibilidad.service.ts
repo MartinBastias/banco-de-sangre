@@ -1,26 +1,24 @@
+import type { EstadoClinico } from '../ficha-medica/ficha-medica.service.ts';
+
 export interface EntradaElegibilidadDonante {
   sexo: string;
-  estadoMedico: string;
+  estadoClinico: EstadoClinico;
   ultimaDonacion?: string | null;
-  fechaFinDiferimiento?: string | null;
+  fechaElegibilidad?: string | null;
 }
-
-export type DonorEligibilityInput = EntradaElegibilidadDonante;
 
 export interface ResultadoElegibilidad {
-  habilitado: boolean;
-  estado: 'Habilitado' | 'Inhabilitado';
+  apto: boolean;
+  estadoClinico: EstadoClinico;
   motivo: string;
-  proximaFechaHabil: string | null;
+  fechaElegibilidad: string | null;
 }
 
-export type EligibilityResult = ResultadoElegibilidad;
-
 /**
- * Calcula la próxima fecha hábil de donación según el tiempo de recuperación biológico (RF-03).
+ * Calcula la próxima fecha de elegibilidad según el tiempo de recuperación biológico (RF-03).
  * Utiliza aritmética UTC para evitar desfases de zona horaria.
  */
-export function calcularProximaFechaHabil(
+export function calcularFechaElegibilidadBiologica(
   ultimaDonacion: string | null | undefined,
   sexo: string,
 ): string | null {
@@ -35,8 +33,6 @@ export function calcularProximaFechaHabil(
   return fecha.toISOString().split('T')[0];
 }
 
-export const calculateNextEligibleDate = calcularProximaFechaHabil;
-
 /**
  * Evalúa la elegibilidad del donante y diferimientos activos (RF-05).
  */
@@ -46,24 +42,24 @@ export function verificarElegibilidad(
 ): ResultadoElegibilidad {
   const hoy = fechaReferencia || new Date().toISOString().split('T')[0];
 
-  if (donante.estadoMedico === 'No apto permanentemente') {
+  if (donante.estadoClinico === 'Excluyente') {
     return {
-      habilitado: false,
-      estado: 'Inhabilitado',
+      apto: false,
+      estadoClinico: 'Excluyente',
       motivo:
-        'Debido a test de elegibilidad, el donante ha quedado no apto permanentemente.',
-      proximaFechaHabil: null,
+        'Debido a test de elegibilidad, el donante ha quedado en estado Excluyente.',
+      fechaElegibilidad: null,
     };
   }
 
-  const fechaBiologica = calcularProximaFechaHabil(
+  const fechaBiologica = calcularFechaElegibilidadBiologica(
     donante.ultimaDonacion,
     donante.sexo,
   );
 
-  if (donante.estadoMedico === 'Diferido temporalmente') {
-    if (!donante.fechaFinDiferimiento || donante.fechaFinDiferimiento > hoy) {
-      let proximaFecha = donante.fechaFinDiferimiento || null;
+  if (donante.estadoClinico === 'Diferido temporalmente') {
+    if (!donante.fechaElegibilidad || donante.fechaElegibilidad > hoy) {
+      let proximaFecha = donante.fechaElegibilidad || null;
       if (
         proximaFecha &&
         fechaBiologica &&
@@ -73,29 +69,27 @@ export function verificarElegibilidad(
       }
 
       return {
-        habilitado: false,
-        estado: 'Inhabilitado',
+        apto: false,
+        estadoClinico: 'Diferido temporalmente',
         motivo: 'El donante se encuentra diferido temporalmente',
-        proximaFechaHabil: proximaFecha,
+        fechaElegibilidad: proximaFecha,
       };
     }
   }
 
   if (fechaBiologica && fechaBiologica > hoy) {
     return {
-      habilitado: false,
-      estado: 'Inhabilitado',
+      apto: false,
+      estadoClinico: 'Diferido temporalmente',
       motivo: `El donante se encuentra en periodo de espera biológica (${donante.sexo === 'M' ? '3 meses' : '4 meses'})`,
-      proximaFechaHabil: fechaBiologica,
+      fechaElegibilidad: fechaBiologica,
     };
   }
 
   return {
-    habilitado: true,
-    estado: 'Habilitado',
+    apto: true,
+    estadoClinico: 'Apto',
     motivo: 'El donante cumple con los requisitos de elegibilidad',
-    proximaFechaHabil: fechaBiologica || hoy,
+    fechaElegibilidad: fechaBiologica || hoy,
   };
 }
-
-export const verifyEligibility = verificarElegibilidad;
