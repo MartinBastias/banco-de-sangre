@@ -1,6 +1,6 @@
-import { eq } from 'drizzle-orm';
+import { asc, eq } from 'drizzle-orm';
 import { db } from '../../lib/db/index.ts';
-import { donantes } from '../../lib/db/schema.ts';
+import { donantes, fichasMedicas } from '../../lib/db/schema.ts';
 
 export class ErrorDonante extends Error {
   statusCode: number;
@@ -75,5 +75,22 @@ export async function buscarDonantePorRut(rutCrudo: string) {
     .limit(1);
 
   return donante ?? null;
+}
+
+/**
+ * Lista todos los donantes registrados junto con su estado clínico actual.
+ */
+export async function listarDonantesConEstado() {
+  return db
+    .select({
+      rut: donantes.rut,
+      estadoClinico: fichasMedicas.estadoClinico,
+      fechaElegibilidad: fichasMedicas.fechaElegibilidad,
+      tipoSangre: fichasMedicas.tipoSangre,
+      fechaCreacion: donantes.fechaCreacion,
+    })
+    .from(donantes)
+    .leftJoin(fichasMedicas, eq(donantes.rut, fichasMedicas.rut))
+    .orderBy(asc(donantes.rut));
 }
 

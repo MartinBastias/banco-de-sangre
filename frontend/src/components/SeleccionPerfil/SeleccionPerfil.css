@@ -65,6 +65,70 @@
   text-align: left;
 }
 
+.tarjeta-formulario--amplia {
+  max-width: 560px;
+}
+
+.seleccion-perfil--amplia {
+  max-width: 560px;
+}
+
+.fila-busqueda-rut {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.fila-busqueda-rut .entrada-texto {
+  flex: 1;
+}
+
+.rejilla-campos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 540px) {
+  .rejilla-campos {
+    grid-template-columns: 1fr;
+  }
+
+  .fila-busqueda-rut {
+    flex-direction: column;
+  }
+}
+
+.seccion-formulario__titulo {
+  margin: 18px 0 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.alerta-info {
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--primary);
+  background: rgba(26, 115, 232, 0.12);
+  color: var(--text-h);
+  font-size: 13px;
+  text-align: left;
+}
+
+.texto-ayuda {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.area-texto {
+  resize: vertical;
+  min-height: 76px;
+}
+
 .tarjeta-formulario__titulo {
   margin: 0 0 8px;
   color: var(--text-h);
@@ -149,6 +213,80 @@
   margin: 0 auto 12px;
   padding: 0 20px;
   font-size: 14px;
+  color: var(--text-muted);
+}
+
+.seleccion-perfil--tabla,
+.tarjeta-formulario--tabla {
+  max-width: 720px;
+}
+
+.encabezado-tabla {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.encabezado-tabla .tarjeta-formulario__descripcion {
+  margin-bottom: 0;
+}
+
+.contenedor-tabla {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.tabla-datos {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  text-align: left;
+}
+
+.tabla-datos th,
+.tabla-datos td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tabla-datos th {
+  font-weight: 600;
+  color: var(--text-h);
+  background: var(--surface-hover);
+}
+
+.tabla-datos tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.insignia-estado {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.insignia-estado--apto {
+  background: #173c2a;
+  color: #8ce2b2;
+}
+
+.insignia-estado--diferido {
+  background: #493819;
+  color: #fcd34d;
+}
+
+.insignia-estado--excluyente {
+  background: #492626;
+  color: #ffaaaa;
+}
+
+.insignia-estado--pendiente {
+  background: var(--surface-hover);
   color: var(--text-muted);
 }
 

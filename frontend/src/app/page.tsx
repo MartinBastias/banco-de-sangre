@@ -1,18 +1,27 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { CalendarioCitas } from '@/components/CalendarioCitas/CalendarioCitas';
 import { EstadoElegibilidad } from '@/components/EstadoElegibilidad/EstadoElegibilidad';
-import type { InformacionElegibilidad } from '@/components/EstadoElegibilidad/estadoElegibilidad.utils';
+import {
+  type InformacionElegibilidad,
+  normalizarEstadoElegibilidad,
+} from '@/components/EstadoElegibilidad/estadoElegibilidad.utils';
 import { IngresoDonante } from '@/components/SeleccionPerfil/IngresoDonante';
+import { MenuEnfermero } from '@/components/SeleccionPerfil/MenuEnfermero';
 import { RegistroDonante } from '@/components/SeleccionPerfil/RegistroDonante';
 import { SeleccionPerfil } from '@/components/SeleccionPerfil/SeleccionPerfil';
+import { TablaCitas } from '@/components/SeleccionPerfil/TablaCitas';
+import { TablaDonantes } from '@/components/SeleccionPerfil/TablaDonantes';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 type VistaActual =
   | 'seleccion-perfil'
-  | 'enfermero'
+  | 'enfermero-menu'
+  | 'enfermero-ficha'
+  | 'enfermero-donantes'
+  | 'enfermero-citas'
   | 'identificacion-donante'
   | 'agendar-cita';
 
@@ -35,6 +44,47 @@ export default function PaginaInicio() {
     setError(null);
   };
 
+  const cargarElegibilidad = useCallback(async (rut: string) => {
+    setCargando(true);
+    setError(null);
+    try {
+      const respuesta = await fetch(
+        `${API_URL}/api/ficha-medica/${encodeURIComponent(rut)}`,
+      );
+
+      if (!respuesta.ok) {
+        throw new Error('No se pudo verificar la elegibilidad');
+      }
+
+      const datos = (await respuesta.json()) as {
+        ficha?: {
+          estadoClinico?: string | null;
+          fechaElegibilidad?: string | null;
+          observaciones?: string | null;
+        } | null;
+      };
+
+      if (datos.ficha) {
+        setElegibilidad({
+          estadoClinico: datos.ficha.estadoClinico ?? null,
+          fechaElegibilidad: datos.ficha.fechaElegibilidad ?? null,
+          observaciones: datos.ficha.observaciones ?? null,
+        });
+      } else {
+        setElegibilidad({
+          estadoClinico: null,
+          fechaElegibilidad: null,
+          observaciones:
+            'Aún no se registra tu ficha médica. Un enfermero debe completar tu evaluación.',
+        });
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al consultar perfil');
+    } finally {
+      setCargando(false);
+    }
+  }, []);
+
   const manejarAlternarElegibilidad = async () => {
     if (mostrarElegibilidad) {
       setMostrarElegibilidad(false);
@@ -42,31 +92,8 @@ export default function PaginaInicio() {
     }
 
     setMostrarElegibilidad(true);
-    if (!elegibilidad && !cargando) {
-      setCargando(true);
-      setError(null);
-      try {
-        const respuesta = await fetch(`${API_URL}/api/donantes/verificar-elegibilidad`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            sexo: 'M',
-            estadoMedico: 'Apto',
-            ultimaDonacion: '2026-06-01',
-          }),
-        });
-
-        if (!respuesta.ok) {
-          throw new Error('No se pudo verificar la elegibilidad');
-        }
-
-        const datos = (await respuesta.json()) as InformacionElegibilidad;
-        setElegibilidad(datos);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Error al consultar perfil');
-      } finally {
-        setCargando(false);
-      }
+    if (!elegibilidad && !cargando && rutDonante) {
+      await cargarElegibilidad(rutDonante);
     }
   };
 
@@ -80,7 +107,7 @@ export default function PaginaInicio() {
           mensajeAviso={mensajeAviso}
           alSeleccionarEnfermero={() => {
             setMensajeAviso(null);
-            setVista('enfermero');
+            setVista('enfermero-menu');
           }}
           alSeleccionarDonante={() => {
             setMensajeAviso(null);
@@ -91,13 +118,51 @@ export default function PaginaInicio() {
     );
   }
 
-  if (vista === 'enfermero') {
+  if (vista === 'enfermero-menu') {
     return (
       <main>
         <header>
           <h1 style={{ textAlign: 'center' }}>Portal de Enfermero</h1>
         </header>
-        <RegistroDonante alVolver={() => volverASeleccionPerfil()} />
+        <MenuEnfermero
+          alIrAFichaMedica={() => setVista('enfermero-ficha')}
+          alIrADonantes={() => setVista('enfermero-donantes')}
+          alIrACitas={() => setVista('enfermero-citas')}
+          alVolver={() => volverASeleccionPerfil()}
+        />
+      </main>
+    );
+  }
+
+  if (vista === 'enfermero-ficha') {
+    return (
+      <main>
+        <header>
+          <h1 style={{ textAlign: 'center' }}>Portal de Enfermero</h1>
+        </header>
+        <RegistroDonante alVolver={() => setVista('enfermero-menu')} />
+      </main>
+    );
+  }
+
+  if (vista === 'enfermero-donantes') {
+    return (
+      <main>
+        <header>
+          <h1 style={{ textAlign: 'center' }}>Portal de Enfermero</h1>
+        </header>
+        <TablaDonantes alVolver={() => setVista('enfermero-menu')} />
+      </main>
+    );
+  }
+
+  if (vista === 'enfermero-citas') {
+    return (
+      <main>
+        <header>
+          <h1 style={{ textAlign: 'center' }}>Portal de Enfermero</h1>
+        </header>
+        <TablaCitas alVolver={() => setVista('enfermero-menu')} />
       </main>
     );
   }
@@ -113,6 +178,7 @@ export default function PaginaInicio() {
             setMensajeAviso(null);
             setRutDonante(rut);
             setVista('agendar-cita');
+            void cargarElegibilidad(rut);
           }}
           alNoRegistrado={(mensaje) => volverASeleccionPerfil(mensaje)}
           alVolver={() => volverASeleccionPerfil()}
@@ -120,6 +186,19 @@ export default function PaginaInicio() {
       </main>
     );
   }
+
+  const estadoNormalizado = normalizarEstadoElegibilidad(
+    elegibilidad?.estadoClinico,
+  );
+  const esExcluyente = estadoNormalizado === 'excluyente';
+  const esDiferido = estadoNormalizado === 'diferido_temporalmente';
+  const fechaCruda = elegibilidad?.fechaElegibilidad;
+  const fechaMinimaDiferido =
+    esDiferido && fechaCruda
+      ? typeof fechaCruda === 'string'
+        ? fechaCruda
+        : fechaCruda.toISOString().split('T')[0]
+      : null;
 
   return (
     <main>
@@ -136,20 +215,22 @@ export default function PaginaInicio() {
             Cambiar perfil
           </button>
         </div>
-        <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-          <button
-            type="button"
-            onClick={manejarAlternarElegibilidad}
-            className="boton boton--neutro-borde"
-            style={{ fontWeight: 600, padding: '10px 18px', fontSize: '15px' }}
-          >
-            {mostrarElegibilidad ? 'Ocultar perfil de elegibilidad' : 'Ver perfil de elegibilidad'}
-          </button>
-        </div>
+        {!esExcluyente && (
+          <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+            <button
+              type="button"
+              onClick={manejarAlternarElegibilidad}
+              className="boton boton--neutro-borde"
+              style={{ fontWeight: 600, padding: '10px 18px', fontSize: '15px' }}
+            >
+              {mostrarElegibilidad ? 'Ocultar perfil de elegibilidad' : 'Ver perfil de elegibilidad'}
+            </button>
+          </div>
+        )}
       </header>
 
       <section style={{ maxWidth: '400px', margin: '0 auto 1.5rem auto' }}>
-        {mostrarElegibilidad && (
+        {(mostrarElegibilidad || esExcluyente) && (
           <div>
             {cargando && <p style={{ textAlign: 'center' }}>Consultando perfil de elegibilidad...</p>}
             {error && <p style={{ color: 'var(--danger)', textAlign: 'center' }}>{error}</p>}
@@ -159,7 +240,19 @@ export default function PaginaInicio() {
       </section>
 
       <section>
-        <CalendarioCitas rut={rutDonante} />
+        {esExcluyente ? (
+          <div
+            className="alerta-error"
+            role="alert"
+            style={{ maxWidth: '520px', margin: '0 auto', textAlign: 'center' }}
+          >
+            No es posible agendar citas porque tu estado clínico es{' '}
+            <strong>Excluyente</strong>. No puedes donar sangre de forma
+            permanente.
+          </div>
+        ) : (
+          <CalendarioCitas rut={rutDonante} fechaMinima={fechaMinimaDiferido} />
+        )}
       </section>
     </main>
   );

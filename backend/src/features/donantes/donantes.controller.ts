@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 import {
   buscarDonantePorRut,
   ErrorDonante,
+  listarDonantesConEstado,
   registrarDonante,
 } from './donantes.service.ts';
 
@@ -55,6 +56,20 @@ export const manejadorBuscarDonante = async (req: Request, res: Response) => {
   } catch (error) {
     const mensaje =
       error instanceof Error ? error.message : 'Error al consultar donante.';
+    return res.status(500).json({ error: mensaje });
+  }
+};
+
+export const manejadorListarDonantes = async (
+  _req: Request,
+  res: Response,
+) => {
+  try {
+    const donantes = await listarDonantesConEstado();
+    return res.status(200).json({ donantes });
+  } catch (error) {
+    const mensaje =
+      error instanceof Error ? error.message : 'Error al listar donantes.';
     return res.status(500).json({ error: mensaje });
   }
 };

@@ -3,27 +3,28 @@ import {
   cancelarCita,
   crearCita,
   ErrorCita,
+  listarCitasActuales,
   obtenerCitaActiva,
   reagendarCita,
 } from './citas.service.ts';
 
 export const manejadorObtenerCita = async (req: Request, res: Response) => {
-  const rut = typeof req.query.rut === 'string' ? req.query.rut : '';
-  if (!rut) {
-    return res.status(400).json({ error: 'El RUT es obligatorio.' });
-  }
+  const rut = typeof req.query.rut === 'string' ? req.query.rut.trim() : '';
 
   try {
-    const cita = await obtenerCitaActiva(rut);
-    return res.status(200).json({ cita });
+    if (rut) {
+      const cita = await obtenerCitaActiva(rut);
+      return res.status(200).json({ cita });
+    }
+
+    const citas = await listarCitasActuales();
+    return res.status(200).json({ citas });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : 'No se pudo consultar la cita.';
-    return res.status(500).json({ error: message });
+    const mensaje =
+      error instanceof Error ? error.message : 'No se pudo consultar las citas.';
+    return res.status(500).json({ error: mensaje });
   }
 };
-
-export const getAppointmentHandler = manejadorObtenerCita;
 
 export const manejadorAgendarCita = async (
   req: Request,
@@ -58,13 +59,11 @@ export const manejadorAgendarCita = async (
     if (error instanceof ErrorCita) {
       return res.status(400).json({ error: error.message });
     }
-    const message =
+    const mensaje =
       error instanceof Error ? error.message : 'Error al agendar la cita.';
-    return res.status(400).json({ error: message });
+    return res.status(400).json({ error: mensaje });
   }
 };
-
-export const scheduleAppointmentHandler = manejadorAgendarCita;
 
 export const manejadorReagendarCita = async (
   req: Request,
@@ -104,13 +103,11 @@ export const manejadorReagendarCita = async (
     if (error instanceof ErrorCita) {
       return res.status(400).json({ error: error.message });
     }
-    const message =
+    const mensaje =
       error instanceof Error ? error.message : 'Error al reagendar la cita.';
-    return res.status(400).json({ error: message });
+    return res.status(400).json({ error: mensaje });
   }
 };
-
-export const rescheduleAppointmentHandler = manejadorReagendarCita;
 
 export const manejadorCancelarCita = async (
   req: Request,
@@ -134,10 +131,8 @@ export const manejadorCancelarCita = async (
     if (error instanceof ErrorCita) {
       return res.status(400).json({ error: error.message });
     }
-    const message =
+    const mensaje =
       error instanceof Error ? error.message : 'Error al cancelar la cita.';
-    return res.status(400).json({ error: message });
+    return res.status(400).json({ error: mensaje });
   }
 };
-
-export const cancelAppointmentHandler = manejadorCancelarCita;
