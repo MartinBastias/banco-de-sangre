@@ -167,3 +167,6 @@ $RECYCLE.BIN/
 *.sqlite
 *.sqlite3
 *.db
+
+# Guía para agentes de IA
+AGENTS.md

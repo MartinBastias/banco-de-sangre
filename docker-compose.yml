@@ -1,0 +1,61 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: banco_sangre_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-banco_sangre}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-banco_sangre_dev}
+      POSTGRES_DB: ${DB_NAME:-banco_sangre}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-banco_sangre} -d ${DB_NAME:-banco_sangre}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    container_name: banco_sangre_backend
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      PORT: 3000
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-banco_sangre}
+      DB_PASSWORD: ${DB_PASSWORD:-banco_sangre_dev}
+      DB_NAME: ${DB_NAME:-banco_sangre}
+      DATABASE_URL: postgresql://${DB_USER:-banco_sangre}:${DB_PASSWORD:-banco_sangre_dev}@db:5432/${DB_NAME:-banco_sangre}
+    volumes:
+      - ./backend:/app:z
+      - backend_modules:/app/node_modules
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    container_name: banco_sangre_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001}
+    volumes:
+      - ./frontend:/app:z
+      - frontend_modules:/app/node_modules
+      - frontend_next:/app/.next
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
+  backend_modules:
+  frontend_modules:
+  frontend_next:
