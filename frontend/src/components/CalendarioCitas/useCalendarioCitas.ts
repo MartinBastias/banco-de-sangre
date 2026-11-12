@@ -5,21 +5,14 @@ import toast from 'react-hot-toast';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
-export type TipoAccionCita = 'crear' | 'editar' | 'cancelar' | 'create' | 'edit' | 'cancel';
-export type AppointmentAction = TipoAccionCita;
+export type TipoAccionCita = 'crear' | 'editar' | 'cancelar';
 
 export interface CitaActiva {
   id: number;
   sede: string;
   fechaSeleccionada: Date;
   horaSeleccionada: string;
-  // Aliases en inglés
-  location?: string;
-  selectedDate?: Date;
-  selectedTime?: string;
 }
-
-export type ActiveAppointment = CitaActiva;
 
 export const HORARIOS_DISPONIBLES = [
   '09:00',
@@ -28,8 +21,6 @@ export const HORARIOS_DISPONIBLES = [
   '14:00',
   '15:30',
 ] as const;
-
-export const AVAILABLE_TIMES = HORARIOS_DISPONIBLES;
 
 /**
  * Determina si un bloque horario ya transcurrió para la fecha dada.
@@ -45,7 +36,19 @@ export const esHoraPasada = (
   return fechaHoraBloque.getTime() <= fechaReferencia.getTime();
 };
 
-export const isPastTimeSlot = esHoraPasada;
+const calcularFechaMinima = (fechaMinima?: string | null): Date => {
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  if (!fechaMinima) return hoy;
+  const fechaParseada = new Date(`${fechaMinima}T00:00:00`);
+  if (
+    Number.isNaN(fechaParseada.getTime()) ||
+    fechaParseada.getTime() <= hoy.getTime()
+  ) {
+    return hoy;
+  }
+  return fechaParseada;
+};
 
 /**
  * Hook para la lógica y estado del agendamiento, reagendamiento y cancelación de citas.
@@ -53,8 +56,19 @@ export const isPastTimeSlot = esHoraPasada;
 export const useCalendarioCitas = (
   citaInicial: CitaActiva | null = null,
   rutDonante?: string,
+  fechaMinima?: string | null,
 ) => {
-  const [fechaSeleccionada, setFechaSeleccionada] = useState<Date>(() => new Date());
+  const fechaMinimaPermitida = calcularFechaMinima(fechaMinima);
+  const [fechaSeleccionadaCruda, setFechaSeleccionada] = useState<Date>(() =>
+    calcularFechaMinima(fechaMinima),
+  );
+  const fechaSeleccionada = (() => {
+    const sinHora = new Date(fechaSeleccionadaCruda);
+    sinHora.setHours(0, 0, 0, 0);
+    return sinHora.getTime() < fechaMinimaPermitida.getTime()
+      ? fechaMinimaPermitida
+      : fechaSeleccionadaCruda;
+  })();
   const [sede, setSede] = useState<string>('');
   const [horaSeleccionada, setHoraSeleccionada] = useState<string>('');
   const [mostrarModal, setMostrarModal] = useState<boolean>(false);
@@ -95,9 +109,6 @@ export const useCalendarioCitas = (
             sede: datos.cita.sede,
             fechaSeleccionada: fecha,
             horaSeleccionada: datos.cita.hora,
-            location: datos.cita.sede,
-            selectedDate: fecha,
-            selectedTime: datos.cita.hora,
           });
         }
       } catch {
@@ -124,7 +135,7 @@ export const useCalendarioCitas = (
   const confirmarCita = async () => {
     const rutActivo = rutDonante || '11111111-1';
 
-    if (accionActual === 'cancelar' || accionActual === 'cancel') {
+    if (accionActual === 'cancelar') {
       if (!citaActiva) return;
 
       try {
@@ -149,7 +160,7 @@ export const useCalendarioCitas = (
         toast.error(mensaje);
       }
     } else {
-      const esEdicion = accionActual === 'editar' || accionActual === 'edit';
+      const esEdicion = accionActual === 'editar';
 
       if (esEdicion && !citaActiva?.id) {
         toast.error('No se encontró la cita a reagendar.');
@@ -168,11 +179,20 @@ export const useCalendarioCitas = (
 
       const desfaseHorario = fechaSeleccionada.getTimezoneOffset() * 60000;
       const fechaLocal = new Date(fechaSeleccionada.getTime() - desfaseHorario);
+      const fechaFormateada = fechaLocal.toISOString().split('T')[0];
+
+      if (fechaMinima && fechaFormateada < fechaMinima) {
+        toast.error(
+          `Estás diferido temporalmente. Solo puedes agendar citas desde el ${fechaMinima}.`,
+        );
+        setMostrarModal(false);
+        return;
+      }
 
       const payload = {
         rut: rutActivo,
         sede,
-        fecha: fechaLocal.toISOString().split('T')[0],
+        fecha: fechaFormateada,
         hora: horaSeleccionada,
       };
 
@@ -213,9 +233,6 @@ export const useCalendarioCitas = (
           sede,
           fechaSeleccionada,
           horaSeleccionada,
-          location: sede,
-          selectedDate: fechaSeleccionada,
-          selectedTime: horaSeleccionada,
         });
         setAccionActual('crear');
       } catch (error) {
@@ -234,9 +251,9 @@ export const useCalendarioCitas = (
     if (!citaActiva) return;
 
     setAccionActual('editar');
-    setSede(citaActiva.sede || citaActiva.location || '');
-    const fecha = citaActiva.fechaSeleccionada || citaActiva.selectedDate || new Date();
-    const hora = citaActiva.horaSeleccionada || citaActiva.selectedTime || '';
+    setSede(citaActiva.sede);
+    const fecha = citaActiva.fechaSeleccionada;
+    const hora = citaActiva.horaSeleccionada;
     setFechaSeleccionada(fecha);
     setHoraSeleccionada(esHoraPasada(fecha, hora) ? '' : hora);
   };
@@ -259,31 +276,12 @@ export const useCalendarioCitas = (
     setAccionActual,
     citaActiva,
     setCitaActiva,
+    fechaMinimaPermitida,
     horariosDisponibles: HORARIOS_DISPONIBLES,
     esHoraBloqueada,
     manejarCambioDeFecha,
     manejarReagendamiento,
     confirmarCita,
     abrirModal,
-    // Aliases en inglés
-    selectedDate: fechaSeleccionada,
-    setSelectedDate: setFechaSeleccionada,
-    location: sede,
-    setLocation: setSede,
-    selectedTime: horaSeleccionada,
-    setSelectedTime: setHoraSeleccionada,
-    isModalOpen: mostrarModal,
-    setIsModalOpen: setMostrarModal,
-    currentAction: accionActual,
-    setCurrentAction: setAccionActual,
-    activeAppointment: citaActiva,
-    availableTimes: HORARIOS_DISPONIBLES,
-    isSlotBlocked: esHoraBloqueada,
-    handleDateChange: manejarCambioDeFecha,
-    handleReschedule: manejarReagendamiento,
-    confirmAppointment: confirmarCita,
-    openModal: abrirModal,
   };
 };
-
-export const useAppointmentCalendar = useCalendarioCitas;

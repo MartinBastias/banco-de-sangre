@@ -63,26 +63,22 @@
 }
 
 /* Estados con borde lateral de color para indicar resultado (sin línea amarilla para pendiente) */
-.tarjeta-elegibilidad--apto,
-.tarjeta-elegibilidad--habilitado {
+.tarjeta-elegibilidad--apto {
   border-left: 4px solid #3cb878;
 }
 
-.tarjeta-elegibilidad--apto .tarjeta-elegibilidad__estado,
-.tarjeta-elegibilidad--habilitado .tarjeta-elegibilidad__estado {
+.tarjeta-elegibilidad--apto .tarjeta-elegibilidad__estado {
   background: #173c2a;
   color: #8ce2b2;
 }
 
 .tarjeta-elegibilidad--diferido,
-.tarjeta-elegibilidad--no-apto,
-.tarjeta-elegibilidad--inhabilitado {
+.tarjeta-elegibilidad--excluyente {
   border-left: 4px solid #e66c6c;
 }
 
 .tarjeta-elegibilidad--diferido .tarjeta-elegibilidad__estado,
-.tarjeta-elegibilidad--no-apto .tarjeta-elegibilidad__estado,
-.tarjeta-elegibilidad--inhabilitado .tarjeta-elegibilidad__estado {
+.tarjeta-elegibilidad--excluyente .tarjeta-elegibilidad__estado {
   background: #492626;
   color: #ffaaaa;
 }

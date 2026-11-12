@@ -6,10 +6,11 @@ import {
 
 const MAPA_ESTADOS: Record<string, { etiqueta: string; clase: string }> = {
   apto: { etiqueta: 'Apto', clase: 'apto' },
-  habilitado: { etiqueta: 'Apto', clase: 'habilitado' },
-  diferido: { etiqueta: 'Diferido', clase: 'diferido' },
-  no_apto: { etiqueta: 'No apto', clase: 'no-apto' },
-  inhabilitado: { etiqueta: 'No apto', clase: 'inhabilitado' },
+  diferido_temporalmente: {
+    etiqueta: 'Diferido temporalmente',
+    clase: 'diferido',
+  },
+  excluyente: { etiqueta: 'Excluyente', clase: 'excluyente' },
 };
 
 const formatearFechaElegibilidad = (fecha?: string | Date | null): string => {
@@ -33,29 +34,41 @@ const formatearFechaElegibilidad = (fecha?: string | Date | null): string => {
 
 export interface PropsEstadoElegibilidad {
   elegibilidad?: InformacionElegibilidad | null;
-  eligibility?: InformacionElegibilidad | null;
 }
-
-export type EligibilityStatusProps = PropsEstadoElegibilidad;
 
 export function EstadoElegibilidad({
   elegibilidad,
-  eligibility,
 }: PropsEstadoElegibilidad) {
-  const info = elegibilidad ?? eligibility;
-  const estadoNormalizado = normalizarEstadoElegibilidad(info?.estado);
+  const estadoNormalizado = normalizarEstadoElegibilidad(
+    elegibilidad?.estadoClinico,
+  );
   const configuracionEstado = MAPA_ESTADOS[estadoNormalizado] ?? {
     etiqueta: 'Pendiente de validación',
     clase: 'pendiente',
   };
-  const esApto =
-    estadoNormalizado === 'apto' || estadoNormalizado === 'habilitado';
-  const mensaje = esApto
-    ? 'Puedes continuar con el agendamiento.'
-    : info?.motivo ||
-      (estadoNormalizado
-        ? 'No es posible agendar mientras tu estado no sea Apto.'
-        : 'El agendamiento se habilitará cuando se confirme tu elegibilidad.');
+  const esApto = estadoNormalizado === 'apto';
+  const esExcluyente = estadoNormalizado === 'excluyente';
+  const esDiferido = estadoNormalizado === 'diferido_temporalmente';
+
+  let mensaje =
+    elegibilidad?.observaciones ||
+    (estadoNormalizado
+      ? 'No es posible agendar mientras tu estado no sea Apto.'
+      : 'El agendamiento se habilitará cuando se confirme tu elegibilidad.');
+
+  if (esApto) {
+    mensaje = 'Puedes continuar con el agendamiento.';
+  } else if (esExcluyente) {
+    mensaje =
+      elegibilidad?.observaciones ||
+      'Tu estado clínico es Excluyente. No puedes donar ni agendar citas de forma permanente.';
+  } else if (esDiferido) {
+    mensaje =
+      elegibilidad?.observaciones ||
+      (elegibilidad?.fechaElegibilidad
+        ? `Te encuentras diferido temporalmente. Solo puedes agendar citas desde el ${elegibilidad.fechaElegibilidad}.`
+        : 'Te encuentras diferido temporalmente.');
+  }
 
   return (
     <section
@@ -77,9 +90,11 @@ export function EstadoElegibilidad({
 
       <div className="tarjeta-elegibilidad__fecha">
         <span className="tarjeta-elegibilidad__etiqueta-fecha">
-          Próxima fecha hábil
+          Fecha de elegibilidad
         </span>
-        <strong>{formatearFechaElegibilidad(info?.proximaFechaHabil)}</strong>
+        <strong>
+          {formatearFechaElegibilidad(elegibilidad?.fechaElegibilidad)}
+        </strong>
       </div>
 
       <p className="tarjeta-elegibilidad__mensaje">{mensaje}</p>
@@ -87,5 +102,4 @@ export function EstadoElegibilidad({
   );
 }
 
-export const EligibilityStatus = EstadoElegibilidad;
 export default EstadoElegibilidad;

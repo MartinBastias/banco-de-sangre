@@ -11,11 +11,9 @@ import './CalendarioCitas.css';
 
 export interface PropsCalendarioCitas {
   citaInicial?: CitaActiva | null;
-  initialAppointment?: CitaActiva | null;
   rut?: string;
+  fechaMinima?: string | null;
 }
-
-export type AppointmentCalendarProps = PropsCalendarioCitas;
 
 const obtenerNombreSede = (codigo: string): string => {
   if (codigo === 'cpp') return 'Sede Concepción';
@@ -28,10 +26,9 @@ const obtenerNombreSede = (codigo: string): string => {
  */
 export function CalendarioCitas({
   citaInicial = null,
-  initialAppointment = null,
   rut,
+  fechaMinima = null,
 }: PropsCalendarioCitas) {
-  const cita = citaInicial ?? initialAppointment;
   const {
     fechaSeleccionada,
     sede,
@@ -43,13 +40,14 @@ export function CalendarioCitas({
     accionActual,
     setAccionActual,
     citaActiva,
+    fechaMinimaPermitida,
     horariosDisponibles,
     esHoraBloqueada,
     manejarCambioDeFecha,
     manejarReagendamiento,
     confirmarCita,
     abrirModal,
-  } = useCalendarioCitas(cita, rut);
+  } = useCalendarioCitas(citaInicial, rut, fechaMinima);
 
   return (
     <>
@@ -65,24 +63,18 @@ export function CalendarioCitas({
       />
 
       <div className="calendario-citas agenda">
-        {citaActiva && accionActual !== 'editar' && accionActual !== 'edit' ? (
+        {citaActiva && accionActual !== 'editar' ? (
           <div className="cita-activa">
             <h3>Tu Cita Activa</h3>
             <p>
-              <strong>Sede:</strong>{' '}
-              {obtenerNombreSede(citaActiva.sede || citaActiva.location || '')}
+              <strong>Sede:</strong> {obtenerNombreSede(citaActiva.sede)}
             </p>
             <p>
               <strong>Fecha:</strong>{' '}
-              {(
-                citaActiva.fechaSeleccionada ||
-                citaActiva.selectedDate ||
-                new Date()
-              ).toLocaleDateString('es-CL')}
+              {citaActiva.fechaSeleccionada.toLocaleDateString('es-CL')}
             </p>
             <p>
-              <strong>Hora:</strong>{' '}
-              {citaActiva.horaSeleccionada || citaActiva.selectedTime}
+              <strong>Hora:</strong> {citaActiva.horaSeleccionada}
             </p>
 
             <div className="acciones">
@@ -118,11 +110,19 @@ export function CalendarioCitas({
               </select>
             </div>
 
+            {fechaMinima && (
+              <p className="aviso-sin-horarios" role="status">
+                Tienes un diferimiento temporal vigente. Solo puedes agendar
+                citas desde el{' '}
+                {fechaMinimaPermitida.toLocaleDateString('es-CL')}.
+              </p>
+            )}
+
             <p className="texto-dia">Selecciona un día:</p>
             <Calendar
               onChange={manejarCambioDeFecha}
               value={fechaSeleccionada}
-              minDate={new Date()}
+              minDate={fechaMinimaPermitida}
             />
 
             <div className="horarios-titulo">
@@ -159,7 +159,7 @@ export function CalendarioCitas({
 
             {sede && horaSeleccionada && (
               <div className="acciones acciones--finales">
-                {(accionActual === 'editar' || accionActual === 'edit') && (
+                {accionActual === 'editar' && (
                   <button
                     type="button"
                     className="boton boton--flex-1 boton--neutro-borde"
@@ -177,7 +177,7 @@ export function CalendarioCitas({
                   className="boton boton--flex-2 boton--exito"
                   onClick={() => abrirModal(accionActual)}
                 >
-                  {accionActual === 'editar' || accionActual === 'edit'
+                  {accionActual === 'editar'
                     ? 'Confirmar Reagendamiento'
                     : 'Agendar Cita'}
                 </button>
@@ -191,26 +191,20 @@ export function CalendarioCitas({
         <div className="modal-superposicion">
           <div className="modal-contenido">
             <h3>
-              {accionActual === 'cancelar' || accionActual === 'cancel'
+              {accionActual === 'cancelar'
                 ? 'Cancelar Cita'
                 : 'Resumen de tu Cita'}
             </h3>
 
-            {accionActual === 'cancelar' || accionActual === 'cancel' ? (
+            {accionActual === 'cancelar' ? (
               <p>
                 ¿Estás seguro de que deseas cancelar tu cita para el{' '}
                 <strong>
-                  {(
-                    citaActiva?.fechaSeleccionada ||
-                    citaActiva?.selectedDate ||
-                    new Date()
-                  ).toLocaleDateString('es-CL')}
+                  {(citaActiva?.fechaSeleccionada || new Date()).toLocaleDateString(
+                    'es-CL',
+                  )}
                 </strong>{' '}
-                a las{' '}
-                <strong>
-                  {citaActiva?.horaSeleccionada || citaActiva?.selectedTime}
-                </strong>
-                ?
+                a las <strong>{citaActiva?.horaSeleccionada}</strong>?
               </p>
             ) : (
               <>
@@ -233,20 +227,18 @@ export function CalendarioCitas({
                 onClick={() => setMostrarModal(false)}
                 className="boton boton--flex-1 boton--neutro-borde"
               >
-                {accionActual === 'cancelar' || accionActual === 'cancel'
-                  ? 'Volver'
-                  : 'Cancelar'}
+                {accionActual === 'cancelar' ? 'Volver' : 'Cancelar'}
               </button>
               <button
                 type="button"
                 onClick={confirmarCita}
                 className={`boton boton--flex-1 ${
-                  accionActual === 'cancelar' || accionActual === 'cancel'
+                  accionActual === 'cancelar'
                     ? 'boton--peligro-solido'
                     : 'boton--primario'
                 }`}
               >
-                {accionActual === 'cancelar' || accionActual === 'cancel'
+                {accionActual === 'cancelar'
                   ? 'Sí, Cancelar'
                   : 'Confirmar Reserva'}
               </button>
@@ -258,5 +250,4 @@ export function CalendarioCitas({
   );
 }
 
-export const AppointmentCalendar = CalendarioCitas;
 export default CalendarioCitas;

@@ -1,11 +1,13 @@
-import { and, count, eq, ne } from 'drizzle-orm';
+import { and, asc, count, eq, ne } from 'drizzle-orm';
 import { db } from '../../lib/db/index.ts';
-import { appointments, citas } from '../../lib/db/schema.ts';
+import { citas } from '../../lib/db/schema.ts';
 import { normalizarRut } from '../donantes/donantes.service.ts';
+import {
+  normalizarEstadoClinico,
+  obtenerFichaMedicaPorRut,
+} from '../ficha-medica/ficha-medica.service.ts';
 
-const tablaCitas = citas || appointments;
 export const CAPACIDAD_MAXIMA_BLOQUE = 5;
-export const MAX_SLOT_CAPACITY = CAPACIDAD_MAXIMA_BLOQUE;
 
 export interface EntradaCita {
   rut: string;
@@ -14,48 +16,91 @@ export interface EntradaCita {
   hora: string;
 }
 
-export type AppointmentInput = EntradaCita;
-
 export interface EntradaReagendarCita {
   sede: string;
   fecha: string;
   hora: string;
 }
 
-export type RescheduleAppointmentInput = EntradaReagendarCita;
-
 export class ErrorCita extends Error {}
-export class AppointmentError extends ErrorCita {}
+
+export function validarElegibilidadParaCita(
+  ficha: {
+    estadoClinico?: string | null;
+    fechaElegibilidad?: string | null;
+  } | null,
+  fechaCita: string,
+): void {
+  if (!ficha) {
+    return;
+  }
+
+  const estado = normalizarEstadoClinico(ficha.estadoClinico ?? undefined);
+  if (estado === 'Excluyente') {
+    throw new ErrorCita(
+      'El donante tiene estado Excluyente y no puede agendar citas.',
+    );
+  }
+
+  if (estado === 'Diferido temporalmente') {
+    if (!ficha.fechaElegibilidad) {
+      throw new ErrorCita(
+        'El donante se encuentra diferido temporalmente sin fecha de elegibilidad definida.',
+      );
+    }
+    if (fechaCita < ficha.fechaElegibilidad) {
+      throw new ErrorCita(
+        `El donante está diferido temporalmente. Solo puede agendar citas desde el ${ficha.fechaElegibilidad}.`,
+      );
+    }
+  }
+}
 
 export async function obtenerCitaActiva(rutCrudo: string) {
   const rut = normalizarRut(rutCrudo);
   const [cita] = await db
     .select({
-      id: tablaCitas.id,
-      rut: tablaCitas.rut,
-      sede: tablaCitas.sede,
-      fecha: tablaCitas.fecha,
-      hora: tablaCitas.hora,
-      estado: tablaCitas.estado,
+      id: citas.id,
+      rut: citas.rut,
+      sede: citas.sede,
+      fecha: citas.fecha,
+      hora: citas.hora,
+      estado: citas.estado,
     })
-    .from(tablaCitas)
-    .where(and(eq(tablaCitas.rut, rut), eq(tablaCitas.estado, 'agendada')))
+    .from(citas)
+    .where(and(eq(citas.rut, rut), eq(citas.estado, 'agendada')))
     .limit(1);
 
   return cita ?? null;
 }
 
-export const getActiveAppointment = obtenerCitaActiva;
+export async function listarCitasActuales() {
+  return db
+    .select({
+      id: citas.id,
+      rut: citas.rut,
+      sede: citas.sede,
+      fecha: citas.fecha,
+      hora: citas.hora,
+      estado: citas.estado,
+    })
+    .from(citas)
+    .where(eq(citas.estado, 'agendada'))
+    .orderBy(asc(citas.fecha), asc(citas.hora));
+}
 
 export async function crearCita(entrada: EntradaCita) {
   const rut = normalizarRut(entrada.rut);
+  const fichaMedica = await obtenerFichaMedicaPorRut(rut);
+  validarElegibilidadParaCita(fichaMedica, entrada.fecha);
+
   const [existente] = await db
     .select({ total: count() })
-    .from(tablaCitas)
+    .from(citas)
     .where(
       and(
-        eq(tablaCitas.rut, rut),
-        eq(tablaCitas.estado, 'agendada'),
+        eq(citas.rut, rut),
+        eq(citas.estado, 'agendada'),
       ),
     );
 
@@ -67,13 +112,13 @@ export async function crearCita(entrada: EntradaCita) {
 
   const [ocupacion] = await db
     .select({ total: count() })
-    .from(tablaCitas)
+    .from(citas)
     .where(
       and(
-        eq(tablaCitas.sede, entrada.sede),
-        eq(tablaCitas.fecha, entrada.fecha),
-        eq(tablaCitas.hora, entrada.hora),
-        eq(tablaCitas.estado, 'agendada'),
+        eq(citas.sede, entrada.sede),
+        eq(citas.fecha, entrada.fecha),
+        eq(citas.hora, entrada.hora),
+        eq(citas.estado, 'agendada'),
       ),
     );
 
@@ -84,7 +129,7 @@ export async function crearCita(entrada: EntradaCita) {
   }
 
   const [creada] = await db
-    .insert(tablaCitas)
+    .insert(citas)
     .values({
       rut,
       sede: entrada.sede,
@@ -92,33 +137,42 @@ export async function crearCita(entrada: EntradaCita) {
       hora: entrada.hora,
     })
     .returning({
-      id: tablaCitas.id,
-      rut: tablaCitas.rut,
-      sede: tablaCitas.sede,
-      fecha: tablaCitas.fecha,
-      hora: tablaCitas.hora,
-      estado: tablaCitas.estado,
+      id: citas.id,
+      rut: citas.rut,
+      sede: citas.sede,
+      fecha: citas.fecha,
+      hora: citas.hora,
+      estado: citas.estado,
     });
 
   return creada;
 }
 
-export const createAppointment = crearCita;
-
 export async function reagendarCita(
   id: number,
   entrada: EntradaReagendarCita,
 ) {
+  const [citaActual] = await db
+    .select({ rut: citas.rut })
+    .from(citas)
+    .where(and(eq(citas.id, id), eq(citas.estado, 'agendada')))
+    .limit(1);
+
+  if (citaActual) {
+    const fichaMedica = await obtenerFichaMedicaPorRut(citaActual.rut);
+    validarElegibilidadParaCita(fichaMedica, entrada.fecha);
+  }
+
   const [ocupacion] = await db
     .select({ total: count() })
-    .from(tablaCitas)
+    .from(citas)
     .where(
       and(
-        eq(tablaCitas.sede, entrada.sede),
-        eq(tablaCitas.fecha, entrada.fecha),
-        eq(tablaCitas.hora, entrada.hora),
-        eq(tablaCitas.estado, 'agendada'),
-        ne(tablaCitas.id, id),
+        eq(citas.sede, entrada.sede),
+        eq(citas.fecha, entrada.fecha),
+        eq(citas.hora, entrada.hora),
+        eq(citas.estado, 'agendada'),
+        ne(citas.id, id),
       ),
     );
 
@@ -129,19 +183,19 @@ export async function reagendarCita(
   }
 
   const [actualizada] = await db
-    .update(tablaCitas)
+    .update(citas)
     .set({
       sede: entrada.sede,
       fecha: entrada.fecha,
       hora: entrada.hora,
     })
-    .where(and(eq(tablaCitas.id, id), eq(tablaCitas.estado, 'agendada')))
+    .where(and(eq(citas.id, id), eq(citas.estado, 'agendada')))
     .returning({
-      id: tablaCitas.id,
-      sede: tablaCitas.sede,
-      fecha: tablaCitas.fecha,
-      hora: tablaCitas.hora,
-      estado: tablaCitas.estado,
+      id: citas.id,
+      sede: citas.sede,
+      fecha: citas.fecha,
+      hora: citas.hora,
+      estado: citas.estado,
     });
 
   if (!actualizada) {
@@ -153,16 +207,14 @@ export async function reagendarCita(
   return actualizada;
 }
 
-export const rescheduleAppointment = reagendarCita;
-
 export async function cancelarCita(id: number) {
   const [cancelada] = await db
-    .update(tablaCitas)
+    .update(citas)
     .set({ estado: 'cancelada' })
-    .where(and(eq(tablaCitas.id, id), eq(tablaCitas.estado, 'agendada')))
+    .where(and(eq(citas.id, id), eq(citas.estado, 'agendada')))
     .returning({
-      id: tablaCitas.id,
-      estado: tablaCitas.estado,
+      id: citas.id,
+      estado: citas.estado,
     });
 
   if (!cancelada) {
@@ -173,5 +225,3 @@ export async function cancelarCita(id: number) {
 
   return cancelada;
 }
-
-export const cancelAppointment = cancelarCita;

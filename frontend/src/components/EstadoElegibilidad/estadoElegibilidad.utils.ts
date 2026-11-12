@@ -1,10 +1,8 @@
 export interface InformacionElegibilidad {
-  estado?: string | null;
-  motivo?: string | null;
-  proximaFechaHabil?: string | Date | null;
+  estadoClinico?: string | null;
+  observaciones?: string | null;
+  fechaElegibilidad?: string | Date | null;
 }
-
-export type EligibilityInfo = InformacionElegibilidad;
 
 export const normalizarEstadoElegibilidad = (estado?: string | null): string =>
   String(estado ?? '')
@@ -14,13 +12,7 @@ export const normalizarEstadoElegibilidad = (estado?: string | null): string =>
     .toLowerCase()
     .replace(/[\s-]+/g, '_');
 
-export const normalizeEligibilityStatus = normalizarEstadoElegibilidad;
-
 export const esDonanteElegible = (
   elegibilidad?: InformacionElegibilidad | null,
-): boolean => {
-  const normalizado = normalizarEstadoElegibilidad(elegibilidad?.estado);
-  return normalizado === 'apto' || normalizado === 'habilitado';
-};
-
-export const isDonorEligible = esDonanteElegible;
+): boolean =>
+  normalizarEstadoElegibilidad(elegibilidad?.estadoClinico) === 'apto';
