@@ -4,14 +4,36 @@ import { useState } from 'react';
 import { CalendarioCitas } from '@/components/CalendarioCitas/CalendarioCitas';
 import { EstadoElegibilidad } from '@/components/EstadoElegibilidad/EstadoElegibilidad';
 import type { InformacionElegibilidad } from '@/components/EstadoElegibilidad/estadoElegibilidad.utils';
+import { IngresoDonante } from '@/components/SeleccionPerfil/IngresoDonante';
+import { RegistroDonante } from '@/components/SeleccionPerfil/RegistroDonante';
+import { SeleccionPerfil } from '@/components/SeleccionPerfil/SeleccionPerfil';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
+type VistaActual =
+  | 'seleccion-perfil'
+  | 'enfermero'
+  | 'identificacion-donante'
+  | 'agendar-cita';
+
 export default function PaginaInicio() {
+  const [vista, setVista] = useState<VistaActual>('seleccion-perfil');
+  const [rutDonante, setRutDonante] = useState<string>('');
+  const [mensajeAviso, setMensajeAviso] = useState<string | null>(null);
+
   const [mostrarElegibilidad, setMostrarElegibilidad] = useState(false);
   const [elegibilidad, setElegibilidad] = useState<InformacionElegibilidad | null>(null);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const volverASeleccionPerfil = (aviso: string | null = null) => {
+    setVista('seleccion-perfil');
+    setRutDonante('');
+    setMensajeAviso(aviso);
+    setMostrarElegibilidad(false);
+    setElegibilidad(null);
+    setError(null);
+  };
 
   const manejarAlternarElegibilidad = async () => {
     if (mostrarElegibilidad) {
@@ -48,10 +70,72 @@ export default function PaginaInicio() {
     }
   };
 
+  if (vista === 'seleccion-perfil') {
+    return (
+      <main>
+        <header>
+          <h1 style={{ textAlign: 'center' }}>Banco de Sangre</h1>
+        </header>
+        <SeleccionPerfil
+          mensajeAviso={mensajeAviso}
+          alSeleccionarEnfermero={() => {
+            setMensajeAviso(null);
+            setVista('enfermero');
+          }}
+          alSeleccionarDonante={() => {
+            setMensajeAviso(null);
+            setVista('identificacion-donante');
+          }}
+        />
+      </main>
+    );
+  }
+
+  if (vista === 'enfermero') {
+    return (
+      <main>
+        <header>
+          <h1 style={{ textAlign: 'center' }}>Portal de Enfermero</h1>
+        </header>
+        <RegistroDonante alVolver={() => volverASeleccionPerfil()} />
+      </main>
+    );
+  }
+
+  if (vista === 'identificacion-donante') {
+    return (
+      <main>
+        <header>
+          <h1 style={{ textAlign: 'center' }}>Portal de Donante</h1>
+        </header>
+        <IngresoDonante
+          alVerificarExitoso={(rut) => {
+            setMensajeAviso(null);
+            setRutDonante(rut);
+            setVista('agendar-cita');
+          }}
+          alNoRegistrado={(mensaje) => volverASeleccionPerfil(mensaje)}
+          alVolver={() => volverASeleccionPerfil()}
+        />
+      </main>
+    );
+  }
+
   return (
     <main>
       <header>
         <h1 style={{ textAlign: 'center' }}>Agenda tu cita con nosotros</h1>
+        <div className="barra-superior">
+          <span>Donante: {rutDonante}</span>
+          <button
+            type="button"
+            onClick={() => volverASeleccionPerfil()}
+            className="boton boton--neutro-borde"
+            style={{ padding: '6px 12px', fontSize: '13px' }}
+          >
+            Cambiar perfil
+          </button>
+        </div>
         <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
           <button
             type="button"
@@ -75,7 +159,7 @@ export default function PaginaInicio() {
       </section>
 
       <section>
-        <CalendarioCitas />
+        <CalendarioCitas rut={rutDonante} />
       </section>
     </main>
   );

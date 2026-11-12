@@ -133,3 +133,43 @@ h2 {
 p {
   margin: 0;
 }
+
+.boton {
+  padding: 10px 16px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-h);
+  font: inherit;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.boton:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.boton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.boton--primario {
+  background: var(--primary);
+  color: var(--primary-text);
+  font-weight: bold;
+}
+
+.boton--primario:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+
+.boton--neutro-borde {
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.boton--neutro-borde:hover:not(:disabled) {
+  background: var(--surface-hover);
+}

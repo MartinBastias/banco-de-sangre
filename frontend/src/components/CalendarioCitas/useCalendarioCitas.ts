@@ -52,6 +52,7 @@ export const isPastTimeSlot = esHoraPasada;
  */
 export const useCalendarioCitas = (
   citaInicial: CitaActiva | null = null,
+  rutDonante?: string,
 ) => {
   const [fechaSeleccionada, setFechaSeleccionada] = useState<Date>(() => new Date());
   const [sede, setSede] = useState<string>('');
@@ -69,6 +70,47 @@ export const useCalendarioCitas = (
     return () => clearInterval(intervalId);
   }, []);
 
+  useEffect(() => {
+    if (!rutDonante || citaInicial) return;
+
+    let cancelado = false;
+    const cargarCitaActiva = async () => {
+      try {
+        const respuesta = await fetch(
+          `${API_URL}/api/citas?rut=${encodeURIComponent(rutDonante)}`,
+        );
+        if (!respuesta.ok) return;
+        const datos = (await respuesta.json()) as {
+          cita?: {
+            id: number;
+            sede: string;
+            fecha: string;
+            hora: string;
+          } | null;
+        };
+        if (!cancelado && datos.cita) {
+          const fecha = new Date(`${datos.cita.fecha}T00:00:00`);
+          setCitaActiva({
+            id: datos.cita.id,
+            sede: datos.cita.sede,
+            fechaSeleccionada: fecha,
+            horaSeleccionada: datos.cita.hora,
+            location: datos.cita.sede,
+            selectedDate: fecha,
+            selectedTime: datos.cita.hora,
+          });
+        }
+      } catch {
+        // Ignorar error silenciosamente al consultar cita inicial
+      }
+    };
+
+    void cargarCitaActiva();
+    return () => {
+      cancelado = true;
+    };
+  }, [rutDonante, citaInicial]);
+
   const esHoraBloqueada = (hora: string): boolean =>
     esHoraPasada(fechaSeleccionada, hora, ahora);
 
@@ -80,8 +122,7 @@ export const useCalendarioCitas = (
   };
 
   const confirmarCita = async () => {
-    // RUT de prueba temporal.
-    const rutPrueba = '11111111-1';
+    const rutActivo = rutDonante || '11111111-1';
 
     if (accionActual === 'cancelar' || accionActual === 'cancel') {
       if (!citaActiva) return;
@@ -129,7 +170,7 @@ export const useCalendarioCitas = (
       const fechaLocal = new Date(fechaSeleccionada.getTime() - desfaseHorario);
 
       const payload = {
-        rut: rutPrueba,
+        rut: rutActivo,
         sede,
         fecha: fechaLocal.toISOString().split('T')[0],
         hora: horaSeleccionada,

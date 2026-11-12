@@ -12,6 +12,7 @@ import './CalendarioCitas.css';
 export interface PropsCalendarioCitas {
   citaInicial?: CitaActiva | null;
   initialAppointment?: CitaActiva | null;
+  rut?: string;
 }
 
 export type AppointmentCalendarProps = PropsCalendarioCitas;
@@ -28,6 +29,7 @@ const obtenerNombreSede = (codigo: string): string => {
 export function CalendarioCitas({
   citaInicial = null,
   initialAppointment = null,
+  rut,
 }: PropsCalendarioCitas) {
   const cita = citaInicial ?? initialAppointment;
   const {
@@ -47,7 +49,7 @@ export function CalendarioCitas({
     manejarReagendamiento,
     confirmarCita,
     abrirModal,
-  } = useCalendarioCitas(cita);
+  } = useCalendarioCitas(cita, rut);
 
   return (
     <>
