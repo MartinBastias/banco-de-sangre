@@ -1,39 +1,148 @@
-# banco-de-sangre
+# Banco de Sangre
 
-## requisitos previos
+Aplicación web con **Next.js (App Router) + React + TypeScript** en el frontend, API en **Node.js + Express + TypeScript + Drizzle ORM** en el backend y **PostgreSQL** como base de datos. Docker Compose levanta y conecta los tres contenedores y conserva los datos de PostgreSQL en un volumen persistente.
 
-como requisitos previos para ejecutar el proyecto necesitan tener instalados: 
+## Arquitectura y estructura
 
-- **node.js**
-- **git bash** (personalmente lo estoy usando como terminal en windows, en linux funciona exactamente igual)
+```text
+banco-de-sangre/
+├── frontend/                   # Contenedor web (Next.js App Router + React + TypeScript)
+│   └── src/
+│       ├── app/                # Rutas y layouts (Server Components)
+│       └── components/         # Componentes agrupados por carpeta (CalendarioCitas, EstadoElegibilidad)
+├── backend/                    # Contenedor API (Node.js + Express + TypeScript + Drizzle ORM)
+│   ├── drizzle/                # Migraciones SQL gestionadas con drizzle-kit
+│   ├── src/
+│   │   ├── features/           # Lógica y endpoints por funcionalidad (citas, elegibilidad, ficha-medica)
+│   │   └── lib/db/             # Esquema Drizzle ORM y conexión a PostgreSQL
+│   └── tests/                  # Pruebas automatizadas
+└── docker-compose.yml          # Orquestación de los 3 contenedores (db, backend, frontend)
+```
 
-## configuración inicial
+## Requisitos
 
-en la terminal clonen el proyecto y entren en la carpeta.
+- Git
+- Docker con Docker Compose v2 (`docker compose`)
 
-- `git clone https://github.com/MartinBastias/banco-de-sangre.git`
+Instala Docker según tu sistema operativo:
 
-- `cd banco-de-sangre`
+- Windows o macOS: [Docker Desktop](https://docs.docker.com/get-started/get-docker/)
+- Linux: [Docker Engine](https://docs.docker.com/engine/install/) y el plugin [Docker Compose](https://docs.docker.com/compose/install/linux/)
 
-ingresen a la carpeta del frontend e instalen las dependencias y vuelvan atrás.
+En Linux, asegúrate también de que el servicio Docker esté iniciado y que tu usuario tenga permiso para ejecutar `docker`.
 
-- `cd frontend`
-- `npm install`
-- `cd ..`
+## Obtener y ejecutar el proyecto
 
-entren al backend, instalen todo y vuelvan atrás.
-- `cd backend`
-- `npm install`
-- `cd ..`
+Clona el repositorio y entra a su carpeta:
 
-## para levantar el proyecto (cada vez que vayan a trabajar)
+```sh
+git clone https://github.com/MartinBastias/banco-de-sangre.git
+cd banco-de-sangre
+```
 
-### para el frontend
+Comprueba que Docker está disponible y levanta los tres contenedores (`db`, `backend` y `frontend`):
 
-- `cd frontend`
-- `npm run dev` para encender el server (tienen que hacer clic en el link localhost que sale en la terminal para ver la app en el navegador).
+```sh
+docker --version
+docker compose version
+docker compose up -d --build --remove-orphans
+```
 
-### para el backend (abran una terminal nueva para no cerrar el frontend)
+La primera ejecución puede tardar mientras Docker descarga imágenes e instala las dependencias de cada contenedor. Cuando termine:
 
-- `cd backend`
-- `node index.js`
+- **Aplicación web (Frontend - Next.js)**: <http://localhost:3000>
+- **API (Backend - Express + Drizzle)**: <http://localhost:3001>
+- **Base de datos (PostgreSQL)**: `localhost:5432`
+
+Comprueba el estado de los contenedores:
+
+```sh
+docker compose ps
+```
+
+## Consultar PostgreSQL
+
+Abre la consola interactiva de la base de datos dentro del contenedor `db`:
+
+```sh
+docker compose exec db psql -U banco_sangre -d banco_sangre
+```
+
+El prompt `banco_sangre=#` indica que ya estás dentro de PostgreSQL. Algunos comandos útiles:
+
+```sql
+\dt
+SELECT * FROM citas;
+SELECT * FROM ficha_medica;
+\q
+```
+
+Las consultas SQL terminan en `;`. `\q` sale de `psql`. También puedes ejecutar una consulta directamente desde la terminal, sin abrir la consola interactiva:
+
+```sh
+docker compose exec -T db psql -U banco_sangre -d banco_sangre -c "SELECT * FROM citas;"
+docker compose exec -T db psql -U banco_sangre -d banco_sangre -c "SELECT * FROM ficha_medica;"
+```
+
+## Operación diaria y comandos útiles
+
+Ver logs de todos los servicios en tiempo real:
+
+```sh
+docker compose logs -f
+```
+
+Ver solo los logs de un contenedor específico (`frontend`, `backend` o `db`):
+
+```sh
+docker compose logs -f frontend
+docker compose logs -f backend
+docker compose logs -f db
+```
+
+Ejecutar pruebas, verificación de tipos o migraciones en los contenedores:
+
+```sh
+# Pruebas y verificación de tipos en el backend
+docker compose exec backend npm test
+docker compose exec backend npm run typecheck
+
+# Migraciones de Drizzle ORM y limpieza de citas en el backend
+docker compose exec backend npm run db:migrate
+docker compose exec backend npm run db:clear
+
+# Lint y verificación de tipos en el frontend
+docker compose exec frontend npm run lint
+docker compose exec frontend npm run typecheck
+```
+
+Detener los contenedores sin borrar la base de datos:
+
+```sh
+docker compose down
+```
+
+Volver a iniciar los servicios ya creados:
+
+```sh
+docker compose up -d
+```
+
+Los datos están en el volumen `pgdata` y se conservan al ejecutar `docker compose down`. **No ejecutes `docker compose down -v`** salvo que quieras borrar también los volúmenes y sus datos.
+
+## Configuración local
+
+Docker Compose usa valores de desarrollo predeterminados para las credenciales de PostgreSQL y la URL de la API. Para personalizarlos, copia `.env.example` a `.env` en la raíz del proyecto:
+
+```sh
+cp .env.example .env
+```
+
+```env
+DB_USER=banco_sangre
+DB_PASSWORD=cambia_esta_clave
+DB_NAME=banco_sangre
+NEXT_PUBLIC_API_URL=http://localhost:3001
+```
+
+Usa los mismos valores para conectar una herramienta gráfica (como DBeaver o pgAdmin) a PostgreSQL: host `localhost`, puerto `5432`, base de datos `DB_NAME`, usuario `DB_USER` y contraseña `DB_PASSWORD`.

@@ -1,0 +1,323 @@
+/* --- Estilos del calendario de citas (compatibles con modo claro y oscuro) --- */
+
+.calendario-citas,
+.agenda {
+  padding: 20px;
+  max-width: 400px;
+  margin: 0 auto;
+  color: var(--text);
+}
+
+/* Tarjeta de la cita activa */
+.cita-activa {
+  background: var(--surface-2);
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border: 1px solid var(--border);
+}
+
+.cita-activa h3 {
+  margin-top: 0;
+}
+
+/* Botones genéricos */
+.boton {
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-h);
+  font: inherit;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.boton:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.boton--flex-1 {
+  flex: 1;
+}
+
+.boton--flex-2 {
+  flex: 2;
+}
+
+.boton--peligro-borde {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+.boton--peligro-borde:hover {
+  background: var(--danger-bg);
+}
+
+.boton--neutro-borde {
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.boton--neutro-borde:hover {
+  background: var(--surface-hover);
+}
+
+.boton--advertencia {
+  background: var(--warning);
+  color: var(--warning-text);
+  font-weight: bold;
+}
+
+.boton--advertencia:hover {
+  filter: brightness(0.95);
+}
+
+.boton--exito {
+  padding: 12px;
+  background: var(--success);
+  color: #fff;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.boton--exito:hover {
+  filter: brightness(1.08);
+}
+
+.boton--primario {
+  background: var(--primary);
+  color: var(--primary-text);
+  font-weight: bold;
+}
+
+.boton--primario:hover {
+  background: var(--primary-hover);
+}
+
+.boton--peligro-solido {
+  background: var(--danger-solid);
+  color: #fff;
+  font-weight: bold;
+}
+
+.boton--peligro-solido:hover {
+  filter: brightness(1.08);
+}
+
+/* Acciones */
+.acciones {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.acciones--finales {
+  margin-top: 30px;
+}
+
+.acciones--modal {
+  margin-top: 25px;
+}
+
+/* Selección de sede */
+.campo-sede {
+  margin-bottom: 20px;
+}
+
+.campo-sede label {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.select-sede {
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text-h);
+  border: 1px solid var(--border);
+  font: inherit;
+}
+
+.select-sede:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+}
+
+.texto-dia {
+  margin-bottom: 8px;
+}
+
+/* Bloques de horario */
+.horarios-titulo {
+  margin-top: 20px;
+}
+
+.aviso-sin-horarios {
+  color: var(--danger);
+  margin-top: 10px;
+}
+
+.horarios {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.horario {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: 1px solid var(--primary);
+  background: transparent;
+  color: var(--text-h);
+  font: inherit;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.horario:hover:not(:disabled) {
+  background: var(--surface-hover);
+}
+
+.horario--seleccionado {
+  background: var(--primary);
+  color: var(--primary-text);
+}
+
+.horario--seleccionado:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+
+.horario:disabled {
+  border-color: var(--border);
+  background: transparent;
+  color: var(--text-disabled);
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+
+.horario:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* --- Calendario react-calendar (estilos de librería) --- */
+.react-calendar {
+  background-color: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+  font-family: inherit;
+  width: 100%;
+}
+
+.react-calendar__navigation button {
+  color: var(--text-h);
+  min-width: 44px;
+  background: none;
+  font-size: 16px;
+  border-radius: 6px;
+}
+
+.react-calendar__navigation button:enabled:hover,
+.react-calendar__navigation button:enabled:focus {
+  background-color: var(--surface-hover);
+}
+
+.react-calendar__month-view__weekdays {
+  color: var(--text-muted);
+}
+
+.react-calendar__month-view__weekdays abbr {
+  text-decoration: none;
+}
+
+.react-calendar__tile {
+  color: var(--text);
+  padding: 10px 6px;
+  border-radius: 6px;
+}
+
+.react-calendar__tile:enabled:hover,
+.react-calendar__tile:enabled:focus {
+  background-color: var(--surface-hover);
+}
+
+.react-calendar__month-view__days__day--weekend {
+  color: var(--danger);
+}
+
+.react-calendar__month-view__days__day--neighboringMonth {
+  color: var(--text-disabled);
+}
+
+.react-calendar__tile--now {
+  background: var(--surface-3);
+}
+
+.react-calendar__tile--now:enabled:hover,
+.react-calendar__tile--now:enabled:focus {
+  background: var(--surface-hover);
+}
+
+.react-calendar__tile--active,
+.react-calendar__tile--active:enabled:hover,
+.react-calendar__tile--active:enabled:focus {
+  background: var(--primary) !important;
+  color: var(--primary-text) !important;
+}
+
+.react-calendar__tile--hasActive,
+.react-calendar__tile--hasActive:enabled:hover,
+.react-calendar__tile--hasActive:enabled:focus {
+  background: var(--accent-bg);
+  color: var(--text-h);
+}
+
+.react-calendar__navigation button:disabled {
+  background-color: transparent;
+  color: var(--text-disabled);
+  cursor: not-allowed;
+}
+
+.react-calendar__tile:disabled,
+.react-calendar__month-view__days__day--neighboringMonth:disabled {
+  background-color: transparent;
+  color: var(--text-disabled);
+  cursor: not-allowed;
+}
+
+/* --- Modal de confirmación --- */
+.modal-superposicion {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-contenido {
+  background: var(--surface);
+  padding: 24px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  width: 90%;
+  max-width: 400px;
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+
+.modal-contenido h3 {
+  margin-top: 0;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 10px;
+}
