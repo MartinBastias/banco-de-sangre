@@ -21,6 +21,13 @@ export const db = drizzle(pool, { schema });
 
 export async function initializeDatabaseSchema(): Promise<void> {
   await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS donantes (
+      rut TEXT PRIMARY KEY,
+      fecha_creacion TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await db.execute(sql`
     CREATE TABLE IF NOT EXISTS ficha_medica (
       rut TEXT PRIMARY KEY,
       presion_arterial TEXT,

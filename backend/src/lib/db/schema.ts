@@ -8,6 +8,11 @@ import {
   timestamp,
 } from 'drizzle-orm/pg-core';
 
+export const donantes = pgTable('donantes', {
+  rut: text('rut').primaryKey(),
+  fechaCreacion: timestamp('fecha_creacion', { withTimezone: true }).defaultNow(),
+});
+
 export const citas = pgTable(
   'citas',
   {

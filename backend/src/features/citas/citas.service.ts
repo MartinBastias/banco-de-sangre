@@ -1,6 +1,7 @@
 import { and, count, eq, ne } from 'drizzle-orm';
 import { db } from '../../lib/db/index.ts';
 import { appointments, citas } from '../../lib/db/schema.ts';
+import { normalizarRut } from '../donantes/donantes.service.ts';
 
 const tablaCitas = citas || appointments;
 export const CAPACIDAD_MAXIMA_BLOQUE = 5;
@@ -26,7 +27,8 @@ export type RescheduleAppointmentInput = EntradaReagendarCita;
 export class ErrorCita extends Error {}
 export class AppointmentError extends ErrorCita {}
 
-export async function obtenerCitaActiva(rut: string) {
+export async function obtenerCitaActiva(rutCrudo: string) {
+  const rut = normalizarRut(rutCrudo);
   const [cita] = await db
     .select({
       id: tablaCitas.id,
@@ -46,12 +48,13 @@ export async function obtenerCitaActiva(rut: string) {
 export const getActiveAppointment = obtenerCitaActiva;
 
 export async function crearCita(entrada: EntradaCita) {
+  const rut = normalizarRut(entrada.rut);
   const [existente] = await db
     .select({ total: count() })
     .from(tablaCitas)
     .where(
       and(
-        eq(tablaCitas.rut, entrada.rut),
+        eq(tablaCitas.rut, rut),
         eq(tablaCitas.estado, 'agendada'),
       ),
     );
@@ -83,7 +86,7 @@ export async function crearCita(entrada: EntradaCita) {
   const [creada] = await db
     .insert(tablaCitas)
     .values({
-      rut: entrada.rut,
+      rut,
       sede: entrada.sede,
       fecha: entrada.fecha,
       hora: entrada.hora,
