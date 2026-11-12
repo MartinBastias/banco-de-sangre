@@ -1,0 +1,191 @@
+{
+  "id": "f8b6ac8a-c4ee-4807-889a-97402967295f",
+  "prevId": "d627c91f-e118-4c25-b6aa-23987574f647",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.citas": {
+      "name": "citas",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "byDefault",
+            "name": "citas_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "rut": {
+          "name": "rut",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sede": {
+          "name": "sede",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fecha": {
+          "name": "fecha",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "hora": {
+          "name": "hora",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "estado": {
+          "name": "estado",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'agendada'"
+        },
+        "fecha_creacion": {
+          "name": "fecha_creacion",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "citas_estado_check": {
+          "name": "citas_estado_check",
+          "value": "\"citas\".\"estado\" IN ('agendada', 'cancelada', 'realizada')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.donantes": {
+      "name": "donantes",
+      "schema": "",
+      "columns": {
+        "rut": {
+          "name": "rut",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "fecha_creacion": {
+          "name": "fecha_creacion",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.ficha_medica": {
+      "name": "ficha_medica",
+      "schema": "",
+      "columns": {
+        "rut": {
+          "name": "rut",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "presion_arterial": {
+          "name": "presion_arterial",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "frecuencia_cardiaca": {
+          "name": "frecuencia_cardiaca",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "peso": {
+          "name": "peso",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "estado_clinico": {
+          "name": "estado_clinico",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tipo_sangre": {
+          "name": "tipo_sangre",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fecha_elegibilidad": {
+          "name": "fecha_elegibilidad",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "observaciones": {
+          "name": "observaciones",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fecha_actualizacion": {
+          "name": "fecha_actualizacion",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "ficha_medica_estado_clinico_check": {
+          "name": "ficha_medica_estado_clinico_check",
+          "value": "\"ficha_medica\".\"estado_clinico\" IS NULL OR \"ficha_medica\".\"estado_clinico\" IN ('Apto', 'Diferido temporalmente', 'Excluyente')"
+        }
+      },
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

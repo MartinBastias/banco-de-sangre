@@ -1,0 +1,2 @@
+ALTER TABLE "ficha_medica" DROP CONSTRAINT "ficha_medica_estado_clinico_check";--> statement-breakpoint
+ALTER TABLE "ficha_medica" ADD CONSTRAINT "ficha_medica_estado_clinico_check" CHECK ("ficha_medica"."estado_clinico" IS NULL OR "ficha_medica"."estado_clinico" IN ('Apto', 'Diferido temporalmente', 'Excluyente'));

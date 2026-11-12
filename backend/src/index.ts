@@ -3,6 +3,7 @@ import express from 'express';
 import rutasCitas from './features/citas/citas.routes.ts';
 import rutasDonantes from './features/donantes/donantes.routes.ts';
 import rutasElegibilidad from './features/elegibilidad/elegibilidad.routes.ts';
+import rutasFichaMedica from './features/ficha-medica/ficha-medica.routes.ts';
 import { initializeDatabaseSchema, pool } from './lib/db/index.ts';
 
 const app = express();
@@ -12,6 +13,7 @@ app.use(express.json());
 
 app.use('/api', rutasCitas);
 app.use('/api', rutasDonantes);
+app.use('/api', rutasFichaMedica);
 app.use('/api/donantes', rutasElegibilidad);
 
 export const startServer = async () => {

@@ -33,12 +33,39 @@ export async function initializeDatabaseSchema(): Promise<void> {
       presion_arterial TEXT,
       frecuencia_cardiaca INTEGER,
       peso REAL,
-      estado_clinico TEXT CHECK(estado_clinico IN ('listo para donar', 'Diferido')),
+      estado_clinico TEXT CHECK(estado_clinico IN ('Apto', 'Diferido temporalmente', 'Excluyente')),
       tipo_sangre TEXT,
       fecha_elegibilidad TEXT,
       observaciones TEXT,
       fecha_actualizacion TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
     );
+  `);
+
+  await db.execute(sql`
+    ALTER TABLE ficha_medica
+    DROP CONSTRAINT IF EXISTS ficha_medica_estado_clinico_check;
+  `);
+
+  await db.execute(sql`
+    UPDATE ficha_medica
+    SET
+      estado_clinico = CASE
+        WHEN estado_clinico = 'listo para donar' THEN 'Apto'
+        WHEN estado_clinico = 'Diferido' THEN 'Diferido temporalmente'
+        WHEN estado_clinico IN ('No apto', 'No apto permanentemente') THEN 'Excluyente'
+        ELSE estado_clinico
+      END,
+      fecha_elegibilidad = CASE
+        WHEN estado_clinico IN ('No apto', 'No apto permanentemente') THEN NULL
+        ELSE fecha_elegibilidad
+      END
+    WHERE estado_clinico IN ('listo para donar', 'Diferido', 'No apto', 'No apto permanentemente');
+  `);
+
+  await db.execute(sql`
+    ALTER TABLE ficha_medica
+    ADD CONSTRAINT ficha_medica_estado_clinico_check
+    CHECK (estado_clinico IS NULL OR estado_clinico IN ('Apto', 'Diferido temporalmente', 'Excluyente'));
   `);
 
   await db.execute(sql`

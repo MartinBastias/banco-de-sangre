@@ -15,6 +15,27 @@
       "when": 1794512213486,
       "tag": "0001_lonely_kingpin",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794516235956,
+      "tag": "0002_robust_preak",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1794517103937,
+      "tag": "0003_mushy_firelord",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794517971642,
+      "tag": "0004_slimy_viper",
+      "breakpoints": true
     }
   ]
 }

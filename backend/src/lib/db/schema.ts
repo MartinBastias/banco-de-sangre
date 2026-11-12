@@ -22,7 +22,7 @@ export const citas = pgTable(
     fecha: text('fecha').notNull(),
     hora: text('hora').notNull(),
     estado: text('estado').default('agendada'),
-    createdAt: timestamp('fecha_creacion', { withTimezone: true }).defaultNow(),
+    fechaCreacion: timestamp('fecha_creacion', { withTimezone: true }).defaultNow(),
   },
   (table) => [
     check(
@@ -32,29 +32,25 @@ export const citas = pgTable(
   ],
 );
 
-export const appointments = citas;
-
 export const fichasMedicas = pgTable(
   'ficha_medica',
   {
     rut: text('rut').primaryKey(),
-    bloodPressure: text('presion_arterial'),
-    heartRate: integer('frecuencia_cardiaca'),
-    weight: real('peso'),
-    clinicalStatus: text('estado_clinico'),
-    bloodType: text('tipo_sangre'),
-    eligibilityDate: text('fecha_elegibilidad'),
-    notes: text('observaciones'),
-    updatedAt: timestamp('fecha_actualizacion', {
+    presionArterial: text('presion_arterial'),
+    frecuenciaCardiaca: integer('frecuencia_cardiaca'),
+    peso: real('peso'),
+    estadoClinico: text('estado_clinico'),
+    tipoSangre: text('tipo_sangre'),
+    fechaElegibilidad: text('fecha_elegibilidad'),
+    observaciones: text('observaciones'),
+    fechaActualizacion: timestamp('fecha_actualizacion', {
       withTimezone: true,
     }).defaultNow(),
   },
   (table) => [
     check(
       'ficha_medica_estado_clinico_check',
-      sql`${table.clinicalStatus} IS NULL OR ${table.clinicalStatus} IN ('listo para donar', 'Diferido')`,
+      sql`${table.estadoClinico} IS NULL OR ${table.estadoClinico} IN ('Apto', 'Diferido temporalmente', 'Excluyente')`,
     ),
   ],
 );
-
-export const medicalRecords = fichasMedicas;
