@@ -1,5 +1,6 @@
-/* --- Estilos de la agenda (compatibles con modo claro y oscuro) --- */
+/* --- Estilos del calendario de citas (compatibles con modo claro y oscuro) --- */
 
+.calendario-citas,
 .agenda {
   padding: 20px;
   max-width: 400px;
@@ -21,7 +22,7 @@
 }
 
 /* Botones genéricos */
-.btn {
+.boton {
   padding: 10px;
   border-radius: 6px;
   border: 1px solid transparent;
@@ -32,48 +33,48 @@
   transition: background-color 0.2s, border-color 0.2s, color 0.2s;
 }
 
-.btn:focus-visible {
+.boton:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
 
-.btn--flex-1 {
+.boton--flex-1 {
   flex: 1;
 }
 
-.btn--flex-2 {
+.boton--flex-2 {
   flex: 2;
 }
 
-.btn--danger-outline {
+.boton--peligro-borde {
   color: var(--danger);
   border-color: var(--danger);
 }
 
-.btn--danger-outline:hover {
+.boton--peligro-borde:hover {
   background: var(--danger-bg);
 }
 
-.btn--neutral-outline {
+.boton--neutro-borde {
   color: var(--text);
   border-color: var(--border);
 }
 
-.btn--neutral-outline:hover {
+.boton--neutro-borde:hover {
   background: var(--surface-hover);
 }
 
-.btn--warning {
+.boton--advertencia {
   background: var(--warning);
   color: var(--warning-text);
   font-weight: bold;
 }
 
-.btn--warning:hover {
+.boton--advertencia:hover {
   filter: brightness(0.95);
 }
 
-.btn--success {
+.boton--exito {
   padding: 12px;
   background: var(--success);
   color: #fff;
@@ -81,27 +82,27 @@
   font-weight: bold;
 }
 
-.btn--success:hover {
+.boton--exito:hover {
   filter: brightness(1.08);
 }
 
-.btn--primary {
+.boton--primario {
   background: var(--primary);
   color: var(--primary-text);
   font-weight: bold;
 }
 
-.btn--primary:hover {
+.boton--primario:hover {
   background: var(--primary-hover);
 }
 
-.btn--danger-solid {
+.boton--peligro-solido {
   background: var(--danger-solid);
   color: #fff;
   font-weight: bold;
 }
 
-.btn--danger-solid:hover {
+.boton--peligro-solido:hover {
   filter: brightness(1.08);
 }
 
@@ -120,7 +121,7 @@
   margin-top: 25px;
 }
 
-/* Formulario de sede */
+/* Selección de sede */
 .campo-sede {
   margin-bottom: 20px;
 }
@@ -149,7 +150,7 @@
   margin-bottom: 8px;
 }
 
-/* Horarios */
+/* Bloques de horario */
 .horarios-titulo {
   margin-top: 20px;
 }
@@ -203,8 +204,7 @@
   outline-offset: 2px;
 }
 
-/* --- Calendario (react-calendar) --- */
-
+/* --- Calendario react-calendar (estilos de librería) --- */
 .react-calendar {
   background-color: var(--surface);
   color: var(--text);
@@ -215,7 +215,6 @@
   width: 100%;
 }
 
-/* Botones de navegación (meses, años) */
 .react-calendar__navigation button {
   color: var(--text-h);
   min-width: 44px;
@@ -229,7 +228,6 @@
   background-color: var(--surface-hover);
 }
 
-/* Días de la semana */
 .react-calendar__month-view__weekdays {
   color: var(--text-muted);
 }
@@ -238,30 +236,25 @@
   text-decoration: none;
 }
 
-/* Días y texto base */
 .react-calendar__tile {
   color: var(--text);
   padding: 10px 6px;
   border-radius: 6px;
 }
 
-/* Efecto al pasar el mouse por encima de un día */
 .react-calendar__tile:enabled:hover,
 .react-calendar__tile:enabled:focus {
   background-color: var(--surface-hover);
 }
 
-/* Días del fin de semana */
 .react-calendar__month-view__days__day--weekend {
   color: var(--danger);
 }
 
-/* Días de meses vecinos */
 .react-calendar__month-view__days__day--neighboringMonth {
   color: var(--text-disabled);
 }
 
-/* Día actual (hoy) */
 .react-calendar__tile--now {
   background: var(--surface-3);
 }
@@ -271,7 +264,6 @@
   background: var(--surface-hover);
 }
 
-/* Día seleccionado */
 .react-calendar__tile--active,
 .react-calendar__tile--active:enabled:hover,
 .react-calendar__tile--active:enabled:focus {
@@ -279,7 +271,6 @@
   color: var(--primary-text) !important;
 }
 
-/* Vista de mes/año con día activo */
 .react-calendar__tile--hasActive,
 .react-calendar__tile--hasActive:enabled:hover,
 .react-calendar__tile--hasActive:enabled:focus {
@@ -287,14 +278,12 @@
   color: var(--text-h);
 }
 
-/* Botones de navegación deshabilitados (flechas) */
 .react-calendar__navigation button:disabled {
   background-color: transparent;
   color: var(--text-disabled);
   cursor: not-allowed;
 }
 
-/* Días deshabilitados (fechas pasadas) */
 .react-calendar__tile:disabled,
 .react-calendar__month-view__days__day--neighboringMonth:disabled {
   background-color: transparent;
@@ -302,9 +291,8 @@
   cursor: not-allowed;
 }
 
-/* --- Estilos para el Modal de Confirmación --- */
-
-.modal-overlay {
+/* --- Modal de confirmación --- */
+.modal-superposicion {
   position: fixed;
   top: 0;
   left: 0;
@@ -317,7 +305,7 @@
   z-index: 1000;
 }
 
-.modal-content {
+.modal-contenido {
   background: var(--surface);
   padding: 24px;
   border-radius: 8px;
@@ -328,7 +316,7 @@
   box-shadow: var(--shadow);
 }
 
-.modal-content h3 {
+.modal-contenido h3 {
   margin-top: 0;
   border-bottom: 1px solid var(--border);
   padding-bottom: 10px;
