@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
+import { responderErrorControlador } from '../../lib/errores.ts';
 import {
   buscarDonantePorRut,
-  ErrorDonante,
   listarDonantesConEstado,
   registrarDonante,
 } from './donantes.service.ts';
@@ -23,12 +23,12 @@ export const manejadorRegistrarDonante = async (
       donante,
     });
   } catch (error) {
-    if (error instanceof ErrorDonante) {
-      return res.status(error.statusCode).json({ error: error.message });
-    }
-    const mensaje =
-      error instanceof Error ? error.message : 'Error al registrar donante.';
-    return res.status(500).json({ error: mensaje });
+    return responderErrorControlador(
+      res,
+      error,
+      'Error al registrar donante.',
+      500,
+    );
   }
 };
 
@@ -54,9 +54,12 @@ export const manejadorBuscarDonante = async (req: Request, res: Response) => {
       donante,
     });
   } catch (error) {
-    const mensaje =
-      error instanceof Error ? error.message : 'Error al consultar donante.';
-    return res.status(500).json({ error: mensaje });
+    return responderErrorControlador(
+      res,
+      error,
+      'Error al consultar donante.',
+      500,
+    );
   }
 };
 
@@ -68,9 +71,11 @@ export const manejadorListarDonantes = async (
     const donantes = await listarDonantesConEstado();
     return res.status(200).json({ donantes });
   } catch (error) {
-    const mensaje =
-      error instanceof Error ? error.message : 'Error al listar donantes.';
-    return res.status(500).json({ error: mensaje });
+    return responderErrorControlador(
+      res,
+      error,
+      'Error al listar donantes.',
+      500,
+    );
   }
 };
-

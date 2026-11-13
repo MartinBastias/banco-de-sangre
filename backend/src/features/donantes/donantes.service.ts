@@ -1,22 +1,19 @@
-import { asc, eq } from 'drizzle-orm';
-import { db } from '../../lib/db/index.ts';
-import { donantes, fichasMedicas } from '../../lib/db/schema.ts';
+import { ErrorDominio } from '../../lib/errores.ts';
+import {
+  calcularDigitoVerificador,
+  esRutValido,
+  MENSAJE_RUT_INVALIDO,
+  normalizarRut,
+} from '../../lib/rut.ts';
+import {
+  buscarDonantePorRutDB,
+  insertarDonanteDB,
+  listarDonantesConEstadoDB,
+} from './donantes.repository.ts';
 
-export class ErrorDonante extends Error {
-  statusCode: number;
+export { calcularDigitoVerificador, esRutValido, normalizarRut };
 
-  constructor(mensaje: string, statusCode = 400) {
-    super(mensaje);
-    this.statusCode = statusCode;
-  }
-}
-
-/**
- * Normaliza el RUT eliminando puntos y espacios, y convirtiendo a mayúsculas.
- */
-export function normalizarRut(rut: string): string {
-  return rut.trim().replace(/\./g, '').toUpperCase();
-}
+export class ErrorDonante extends ErrorDominio {}
 
 /**
  * Registra un nuevo donante usando su RUT.
@@ -24,19 +21,11 @@ export function normalizarRut(rut: string): string {
 export async function registrarDonante(rutCrudo: string) {
   const rut = normalizarRut(rutCrudo);
 
-  if (!rut || rut.length < 3) {
-    throw new ErrorDonante('Debes ingresar un RUT válido.', 400);
+  if (!esRutValido(rut)) {
+    throw new ErrorDonante(MENSAJE_RUT_INVALIDO, 400);
   }
 
-  const [existente] = await db
-    .select({
-      rut: donantes.rut,
-      fechaCreacion: donantes.fechaCreacion,
-    })
-    .from(donantes)
-    .where(eq(donantes.rut, rut))
-    .limit(1);
-
+  const existente = await buscarDonantePorRutDB(rut);
   if (existente) {
     throw new ErrorDonante(
       'El donante con este RUT ya se encuentra registrado.',
@@ -44,15 +33,7 @@ export async function registrarDonante(rutCrudo: string) {
     );
   }
 
-  const [creado] = await db
-    .insert(donantes)
-    .values({ rut })
-    .returning({
-      rut: donantes.rut,
-      fechaCreacion: donantes.fechaCreacion,
-    });
-
-  return creado;
+  return insertarDonanteDB(rut);
 }
 
 /**
@@ -60,37 +41,16 @@ export async function registrarDonante(rutCrudo: string) {
  */
 export async function buscarDonantePorRut(rutCrudo: string) {
   const rut = normalizarRut(rutCrudo);
-
   if (!rut) {
     return null;
   }
 
-  const [donante] = await db
-    .select({
-      rut: donantes.rut,
-      fechaCreacion: donantes.fechaCreacion,
-    })
-    .from(donantes)
-    .where(eq(donantes.rut, rut))
-    .limit(1);
-
-  return donante ?? null;
+  return buscarDonantePorRutDB(rut);
 }
 
 /**
  * Lista todos los donantes registrados junto con su estado clínico actual.
  */
 export async function listarDonantesConEstado() {
-  return db
-    .select({
-      rut: donantes.rut,
-      estadoClinico: fichasMedicas.estadoClinico,
-      fechaElegibilidad: fichasMedicas.fechaElegibilidad,
-      tipoSangre: fichasMedicas.tipoSangre,
-      fechaCreacion: donantes.fechaCreacion,
-    })
-    .from(donantes)
-    .leftJoin(fichasMedicas, eq(donantes.rut, fichasMedicas.rut))
-    .orderBy(asc(donantes.rut));
+  return listarDonantesConEstadoDB();
 }
-

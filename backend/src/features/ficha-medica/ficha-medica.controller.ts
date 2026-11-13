@@ -1,11 +1,11 @@
 import type { Request, Response } from 'express';
+import { responderErrorControlador } from '../../lib/errores.ts';
 import { buscarDonantePorRut } from '../donantes/donantes.service.ts';
 import {
-  type EntradaFormularioFichaMedica,
-  ErrorFichaMedica,
   guardarFichaMedica,
   obtenerFichaMedicaPorRut,
 } from './ficha-medica.service.ts';
+import type { EntradaFormularioFichaMedica } from './ficha-medica.types.ts';
 
 export const manejadorObtenerFichaMedica = async (
   req: Request,
@@ -37,11 +37,12 @@ export const manejadorObtenerFichaMedica = async (
       ficha,
     });
   } catch (error) {
-    const mensaje =
-      error instanceof Error
-        ? error.message
-        : 'Error al consultar la ficha médica.';
-    return res.status(500).json({ error: mensaje });
+    return responderErrorControlador(
+      res,
+      error,
+      'Error al consultar la ficha médica.',
+      500,
+    );
   }
 };
 
@@ -66,13 +67,11 @@ export const manejadorGuardarFichaMedica = async (
 
     return res.status(resultado.actualizado ? 200 : 201).json(resultado);
   } catch (error) {
-    if (error instanceof ErrorFichaMedica) {
-      return res.status(error.statusCode).json({ error: error.message });
-    }
-    const mensaje =
-      error instanceof Error
-        ? error.message
-        : 'Error al guardar la ficha médica.';
-    return res.status(500).json({ error: mensaje });
+    return responderErrorControlador(
+      res,
+      error,
+      'Error al guardar la ficha médica.',
+      500,
+    );
   }
 };

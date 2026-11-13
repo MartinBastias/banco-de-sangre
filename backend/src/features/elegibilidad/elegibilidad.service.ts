@@ -1,4 +1,5 @@
-import type { EstadoClinico } from '../ficha-medica/ficha-medica.service.ts';
+import { formatearFechaUTC } from '../../lib/fechas.ts';
+import type { EstadoClinico } from '../ficha-medica/ficha-medica.types.ts';
 
 export interface EntradaElegibilidadDonante {
   sexo: string;
@@ -30,7 +31,7 @@ export function calcularFechaElegibilidadBiologica(
   const mesesEspera = sexo === 'M' || sexo === 'Hombre' ? 3 : 4;
   fecha.setUTCMonth(fecha.getUTCMonth() + mesesEspera);
 
-  return fecha.toISOString().split('T')[0];
+  return formatearFechaUTC(fecha);
 }
 
 /**
@@ -40,7 +41,7 @@ export function verificarElegibilidad(
   donante: EntradaElegibilidadDonante,
   fechaReferencia: string | null = null,
 ): ResultadoElegibilidad {
-  const hoy = fechaReferencia || new Date().toISOString().split('T')[0];
+  const hoy = fechaReferencia || formatearFechaUTC(new Date());
 
   if (donante.estadoClinico === 'Excluyente') {
     return {
