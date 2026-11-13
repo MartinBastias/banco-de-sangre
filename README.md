@@ -7,15 +7,17 @@ Aplicación web con **Next.js (App Router) + React + TypeScript** en el frontend
 ```text
 banco-de-sangre/
 ├── frontend/                   # Contenedor web (Next.js App Router + React + TypeScript)
-│   └── src/
-│       ├── app/                # Rutas y layouts (Server Components)
-│       └── components/         # Componentes agrupados por carpeta (CalendarioCitas, EstadoElegibilidad)
+│   ├── src/
+│   │   ├── app/                # Rutas y layouts (App Router)
+│   │   ├── components/         # Componentes agrupados por carpeta (CalendarioCitas, EstadoElegibilidad, SeleccionPerfil)
+│   │   └── lib/                # Utilidades, hooks y constantes compartidas
+│   └── tests/                  # Pruebas automatizadas del frontend
 ├── backend/                    # Contenedor API (Node.js + Express + TypeScript + Drizzle ORM)
 │   ├── drizzle/                # Migraciones SQL gestionadas con drizzle-kit
 │   ├── src/
-│   │   ├── features/           # Lógica y endpoints por funcionalidad (citas, elegibilidad, ficha-medica)
-│   │   └── lib/db/             # Esquema Drizzle ORM y conexión a PostgreSQL
-│   └── tests/                  # Pruebas automatizadas
+│   │   ├── features/           # Lógica y endpoints por funcionalidad (citas, donantes, elegibilidad, ficha-medica)
+│   │   └── lib/                # Esquema Drizzle ORM, conexión a PostgreSQL y utilidades comunes
+│   └── tests/                  # Pruebas automatizadas del backend
 └── docker-compose.yml          # Orquestación de los 3 contenedores (db, backend, frontend)
 ```
 
@@ -72,6 +74,7 @@ El prompt `banco_sangre=#` indica que ya estás dentro de PostgreSQL. Algunos co
 
 ```sql
 \dt
+SELECT * FROM donantes;
 SELECT * FROM citas;
 SELECT * FROM ficha_medica;
 \q
@@ -80,6 +83,7 @@ SELECT * FROM ficha_medica;
 Las consultas SQL terminan en `;`. `\q` sale de `psql`. También puedes ejecutar una consulta directamente desde la terminal, sin abrir la consola interactiva:
 
 ```sh
+docker compose exec -T db psql -U banco_sangre -d banco_sangre -c "SELECT * FROM donantes;"
 docker compose exec -T db psql -U banco_sangre -d banco_sangre -c "SELECT * FROM citas;"
 docker compose exec -T db psql -U banco_sangre -d banco_sangre -c "SELECT * FROM ficha_medica;"
 ```
@@ -107,11 +111,13 @@ Ejecutar pruebas, verificación de tipos o migraciones en los contenedores:
 docker compose exec backend npm test
 docker compose exec backend npm run typecheck
 
-# Migraciones de Drizzle ORM y limpieza de citas en el backend
+# Generación/aplicación de migraciones de Drizzle ORM y limpieza de citas en el backend
+docker compose exec backend npm run db:generate
 docker compose exec backend npm run db:migrate
 docker compose exec backend npm run db:clear
 
-# Lint y verificación de tipos en el frontend
+# Pruebas, lint y verificación de tipos en el frontend
+docker compose exec frontend npm test
 docker compose exec frontend npm run lint
 docker compose exec frontend npm run typecheck
 ```
