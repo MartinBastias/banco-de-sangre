@@ -1,37 +1,19 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import type { Request, Response } from 'express';
+import type { Request } from 'express';
 import {
   manejadorGuardarFichaMedica,
   manejadorObtenerFichaMedica,
-} from '../src/features/ficha-medica/ficha-medica.controller.ts';
+} from '../../../src/features/ficha-medica/ficha-medica.controller.ts';
 import {
-  debeEliminarCitaPorCambioEstado,
   ErrorFichaMedica,
   type RegistroFichaMedicaDB,
+} from '../../../src/features/ficha-medica/ficha-medica.types.ts';
+import {
+  debeEliminarCitaPorCambioEstado,
   validarYPrepararFichaMedica,
-} from '../src/features/ficha-medica/ficha-medica.service.ts';
-
-function crearRespuestaSimulada() {
-  let statusCode = 200;
-  let body: Record<string, unknown> = {};
-
-  const res = {
-    status(code: number) {
-      statusCode = code;
-      return this;
-    },
-    json(payload: Record<string, unknown>) {
-      body = payload;
-      return this;
-    },
-  } as unknown as Response;
-
-  return {
-    res,
-    obtenerResultado: () => ({ statusCode, body }),
-  };
-}
+} from '../../../src/features/ficha-medica/ficha-medica.validation.ts';
+import { crearRespuestaSimulada } from '../../helpers/http-mock.ts';
 
 describe('Servicio y Controlador de Ficha Médica', () => {
   const fechaBase = new Date('2026-11-12T12:00:00Z');
@@ -39,9 +21,7 @@ describe('Servicio y Controlador de Ficha Médica', () => {
   it('valida y prepara una nueva ficha médica en estado Apto', () => {
     const resultado = validarYPrepararFichaMedica(
       {
-        rut: '12.345.678-k',
-        presionArterial: '120/80',
-        frecuenciaCardiaca: 72,
+        rut: '12.345.678-5',
         peso: 70.5,
         tipoSangre: 'O+',
         estadoClinico: 'Apto',
@@ -51,9 +31,7 @@ describe('Servicio y Controlador de Ficha Médica', () => {
       fechaBase,
     );
 
-    assert.equal(resultado.rut, '12345678-K');
-    assert.equal(resultado.presionArterial, '120/80');
-    assert.equal(resultado.frecuenciaCardiaca, 72);
+    assert.equal(resultado.rut, '12345678-5');
     assert.equal(resultado.peso, 70.5);
     assert.equal(resultado.tipoSangre, 'O+');
     assert.equal(resultado.estadoClinico, 'Apto');
@@ -65,8 +43,6 @@ describe('Servicio y Controlador de Ficha Médica', () => {
     const resultado = validarYPrepararFichaMedica(
       {
         rut: '11111111-1',
-        presionArterial: '110/70',
-        frecuenciaCardiaca: 68,
         peso: 64,
         tipoSangre: 'A-',
         estadoClinico: 'Diferido temporalmente',
@@ -88,8 +64,6 @@ describe('Servicio y Controlador de Ficha Médica', () => {
         validarYPrepararFichaMedica(
           {
             rut: '11111111-1',
-            presionArterial: '120/80',
-            frecuenciaCardiaca: 70,
             peso: 65,
             tipoSangre: 'B+',
             estadoClinico: 'Diferido temporalmente',
@@ -105,8 +79,6 @@ describe('Servicio y Controlador de Ficha Médica', () => {
     const excluyente = validarYPrepararFichaMedica(
       {
         rut: '22222222-2',
-        presionArterial: '130/85',
-        frecuenciaCardiaca: 76,
         peso: 75,
         tipoSangre: 'AB+',
         estadoClinico: 'Excluyente',
@@ -124,8 +96,6 @@ describe('Servicio y Controlador de Ficha Médica', () => {
         validarYPrepararFichaMedica(
           {
             rut: '22222222-2',
-            presionArterial: '130/85',
-            frecuenciaCardiaca: 76,
             peso: 75,
             tipoSangre: 'AB+',
             estadoClinico: 'No apto',
@@ -137,22 +107,20 @@ describe('Servicio y Controlador de Ficha Médica', () => {
     );
   });
 
-  it('rechaza signos vitales o tipo de sangre inválidos', () => {
+  it('rechaza peso, tipo de sangre o RUT inválidos', () => {
     assert.throws(
       () =>
         validarYPrepararFichaMedica(
           {
             rut: '11111111-1',
-            presionArterial: '80/120',
-            frecuenciaCardiaca: 70,
-            peso: 65,
+            peso: 10,
             tipoSangre: 'O+',
             estadoClinico: 'Apto',
           },
           null,
           fechaBase,
         ),
-      /presión arterial/i,
+      /peso/i,
     );
 
     assert.throws(
@@ -160,25 +128,6 @@ describe('Servicio y Controlador de Ficha Médica', () => {
         validarYPrepararFichaMedica(
           {
             rut: '11111111-1',
-            presionArterial: '120/80',
-            frecuenciaCardiaca: 20,
-            peso: 65,
-            tipoSangre: 'O+',
-            estadoClinico: 'Apto',
-          },
-          null,
-          fechaBase,
-        ),
-      /frecuencia cardíaca/i,
-    );
-
-    assert.throws(
-      () =>
-        validarYPrepararFichaMedica(
-          {
-            rut: '11111111-1',
-            presionArterial: '120/80',
-            frecuenciaCardiaca: 70,
             peso: 65,
             tipoSangre: 'Z+',
             estadoClinico: 'Apto',
@@ -188,13 +137,41 @@ describe('Servicio y Controlador de Ficha Médica', () => {
         ),
       /tipo de sangre/i,
     );
+
+    assert.throws(
+      () =>
+        validarYPrepararFichaMedica(
+          {
+            rut: '12.345.678-9',
+            peso: 65,
+            tipoSangre: 'O+',
+            estadoClinico: 'Apto',
+          },
+          null,
+          fechaBase,
+        ),
+      /RUT/i,
+    );
+
+    assert.throws(
+      () =>
+        validarYPrepararFichaMedica(
+          {
+            rut: '12345678-A',
+            peso: 65,
+            tipoSangre: 'O+',
+            estadoClinico: 'Apto',
+          },
+          null,
+          fechaBase,
+        ),
+      /RUT/i,
+    );
   });
 
   it('actualiza solo campos modificados en donante existente y preserva tipo de sangre', () => {
     const existente: RegistroFichaMedicaDB = {
-      rut: '12345678-9',
-      presionArterial: '120/80',
-      frecuenciaCardiaca: 72,
+      rut: '33333333-3',
       peso: 70,
       estadoClinico: 'Diferido temporalmente',
       tipoSangre: 'O+',
@@ -204,17 +181,15 @@ describe('Servicio y Controlador de Ficha Médica', () => {
 
     const actualizado = validarYPrepararFichaMedica(
       {
-        rut: '12345678-9',
+        rut: '33333333-3',
         estadoClinico: 'Apto',
-        tipoSangre: 'AB-', // No debe sobrescribir el tipo de sangre existente
+        tipoSangre: 'AB-',
         observaciones: 'Aprobado en nueva evaluación.',
       },
       existente,
       fechaBase,
     );
 
-    assert.equal(actualizado.presionArterial, '120/80');
-    assert.equal(actualizado.frecuenciaCardiaca, 72);
     assert.equal(actualizado.peso, 70);
     assert.equal(actualizado.tipoSangre, 'O+');
     assert.equal(actualizado.estadoClinico, 'Apto');

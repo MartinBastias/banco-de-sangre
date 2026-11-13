@@ -1,31 +1,11 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import type { Request, Response } from 'express';
-import { manejadorVerificarElegibilidad } from '../src/features/elegibilidad/elegibilidad.routes.ts';
+import { manejadorVerificarElegibilidad } from '../../../src/features/elegibilidad/elegibilidad.controller.ts';
 import {
   calcularFechaElegibilidadBiologica,
   verificarElegibilidad,
-} from '../src/features/elegibilidad/elegibilidad.service.ts';
-
-function invocarManejador(body: Record<string, unknown>) {
-  let statusCode = 200;
-  let responseBody: Record<string, unknown> = {};
-
-  const req = { body } as Request;
-  const res = {
-    status(code: number) {
-      statusCode = code;
-      return this;
-    },
-    json(payload: Record<string, unknown>) {
-      responseBody = payload;
-      return this;
-    },
-  } as unknown as Response;
-
-  manejadorVerificarElegibilidad(req, res);
-  return { statusCode, body: responseBody };
-}
+} from '../../../src/features/elegibilidad/elegibilidad.service.ts';
+import { invocarControladorSincrono } from '../../helpers/http-mock.ts';
 
 describe('Servicio de Elegibilidad Biológica (RF-03 & RF-05)', () => {
   describe('Cálculo de fecha de elegibilidad biológica (RF-03)', () => {
@@ -125,10 +105,13 @@ describe('Servicio de Elegibilidad Biológica (RF-03 & RF-05)', () => {
 
   describe('Endpoint POST /api/donantes/verificar-elegibilidad', () => {
     it('retorna "Excluyente" cuando el donante es "Excluyente"', () => {
-      const response = invocarManejador({
-        sexo: 'M',
-        estadoClinico: 'Excluyente',
-      });
+      const response = invocarControladorSincrono(
+        manejadorVerificarElegibilidad,
+        {
+          sexo: 'M',
+          estadoClinico: 'Excluyente',
+        },
+      );
 
       assert.equal(response.statusCode, 200);
       assert.equal(response.body.estadoClinico, 'Excluyente');
@@ -140,11 +123,14 @@ describe('Servicio de Elegibilidad Biológica (RF-03 & RF-05)', () => {
     });
 
     it('retorna "Diferido temporalmente" cuando el donante está diferido temporalmente', () => {
-      const response = invocarManejador({
-        sexo: 'F',
-        estadoClinico: 'Diferido temporalmente',
-        fechaElegibilidad: '2026-12-01',
-      });
+      const response = invocarControladorSincrono(
+        manejadorVerificarElegibilidad,
+        {
+          sexo: 'F',
+          estadoClinico: 'Diferido temporalmente',
+          fechaElegibilidad: '2026-12-01',
+        },
+      );
 
       assert.equal(response.statusCode, 200);
       assert.equal(response.body.estadoClinico, 'Diferido temporalmente');
@@ -157,7 +143,10 @@ describe('Servicio de Elegibilidad Biológica (RF-03 & RF-05)', () => {
     });
 
     it('retorna 400 cuando faltan datos obligatorios (sexo o estadoClinico)', () => {
-      const response = invocarManejador({ sexo: 'M' });
+      const response = invocarControladorSincrono(
+        manejadorVerificarElegibilidad,
+        { sexo: 'M' },
+      );
       assert.equal(response.statusCode, 400);
       assert.match(
         String(response.body.error),

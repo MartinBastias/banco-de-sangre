@@ -8,7 +8,7 @@
     "dev": "node --watch src/index.ts",
     "start": "node src/index.ts",
     "typecheck": "tsc --noEmit",
-    "test": "node --test tests/*.test.ts",
+    "test": "node --test 'tests/**/*.test.ts'",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:clear": "node src/clear-db.ts"
