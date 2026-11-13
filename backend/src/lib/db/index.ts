@@ -30,8 +30,6 @@ export async function initializeDatabaseSchema(): Promise<void> {
   await db.execute(sql`
     CREATE TABLE IF NOT EXISTS ficha_medica (
       rut TEXT PRIMARY KEY,
-      presion_arterial TEXT,
-      frecuencia_cardiaca INTEGER,
       peso REAL,
       estado_clinico TEXT CHECK(estado_clinico IN ('Apto', 'Diferido temporalmente', 'Excluyente')),
       tipo_sangre TEXT,
@@ -39,6 +37,12 @@ export async function initializeDatabaseSchema(): Promise<void> {
       observaciones TEXT,
       fecha_actualizacion TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
     );
+  `);
+
+  await db.execute(sql`
+    ALTER TABLE ficha_medica
+    DROP COLUMN IF EXISTS presion_arterial,
+    DROP COLUMN IF EXISTS frecuencia_cardiaca;
   `);
 
   await db.execute(sql`

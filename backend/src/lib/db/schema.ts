@@ -36,8 +36,6 @@ export const fichasMedicas = pgTable(
   'ficha_medica',
   {
     rut: text('rut').primaryKey(),
-    presionArterial: text('presion_arterial'),
-    frecuenciaCardiaca: integer('frecuencia_cardiaca'),
     peso: real('peso'),
     estadoClinico: text('estado_clinico'),
     tipoSangre: text('tipo_sangre'),
