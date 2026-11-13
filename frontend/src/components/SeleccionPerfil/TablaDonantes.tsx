@@ -1,9 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { API_URL } from '@/lib/constantes';
+import { useConsultaLista } from '@/lib/useConsultaLista';
 import './SeleccionPerfil.css';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export interface DonanteListado {
   rut: string;
@@ -25,75 +24,35 @@ const obtenerClaseEstado = (estado: string | null): string => {
   return 'insignia-estado insignia-estado--pendiente';
 };
 
+async function consultarDonantes(): Promise<DonanteListado[]> {
+  const respuesta = await fetch(`${API_URL}/api/donantes`);
+  const datos = (await respuesta.json()) as {
+    donantes?: DonanteListado[];
+    error?: string;
+  };
+
+  if (!respuesta.ok) {
+    throw new Error(
+      datos.error || 'No se pudo cargar la base de datos de donantes.',
+    );
+  }
+
+  return datos.donantes ?? [];
+}
+
 /**
  * Pantalla para consultar la tabla de donantes registrados y su estado clínico.
  */
 export function TablaDonantes({ alVolver }: PropsTablaDonantes) {
-  const [donantes, setDonantes] = useState<DonanteListado[]>([]);
-  const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const consultarDonantes = async () => {
-    const respuesta = await fetch(`${API_URL}/api/donantes`);
-    const datos = (await respuesta.json()) as {
-      donantes?: DonanteListado[];
-      error?: string;
-    };
-
-    if (!respuesta.ok) {
-      throw new Error(datos.error || 'No se pudo cargar la base de datos de donantes.');
-    }
-
-    return datos.donantes ?? [];
-  };
-
-  useEffect(() => {
-    let cancelado = false;
-
-    const cargar = async () => {
-      try {
-        const lista = await consultarDonantes();
-        if (!cancelado) {
-          setDonantes(lista);
-          setError(null);
-        }
-      } catch (err) {
-        if (!cancelado) {
-          setError(
-            err instanceof Error
-              ? err.message
-              : 'Error al consultar la base de datos de donantes.',
-          );
-        }
-      } finally {
-        if (!cancelado) {
-          setCargando(false);
-        }
-      }
-    };
-
-    void cargar();
-    return () => {
-      cancelado = true;
-    };
-  }, []);
-
-  const manejarActualizar = async () => {
-    setCargando(true);
-    setError(null);
-    try {
-      const lista = await consultarDonantes();
-      setDonantes(lista);
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Error al consultar la base de datos de donantes.',
-      );
-    } finally {
-      setCargando(false);
-    }
-  };
+  const {
+    items: donantes,
+    cargando,
+    error,
+    actualizar,
+  } = useConsultaLista<DonanteListado>(
+    consultarDonantes,
+    'Error al consultar la base de datos de donantes.',
+  );
 
   return (
     <section className="seleccion-perfil seleccion-perfil--tabla">
@@ -109,7 +68,7 @@ export function TablaDonantes({ alVolver }: PropsTablaDonantes) {
           </div>
           <button
             type="button"
-            onClick={manejarActualizar}
+            onClick={() => void actualizar()}
             className="boton boton--neutro-borde"
             disabled={cargando}
           >

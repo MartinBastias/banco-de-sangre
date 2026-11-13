@@ -1,9 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { API_URL, obtenerNombreSede } from '@/lib/constantes';
+import { useConsultaLista } from '@/lib/useConsultaLista';
 import './SeleccionPerfil.css';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export interface CitaListado {
   id: number;
@@ -18,81 +17,35 @@ export interface PropsTablaCitas {
   alVolver: () => void;
 }
 
-const obtenerNombreSede = (codigo: string): string => {
-  if (codigo === 'cpp') return 'Sede Concepción';
-  if (codigo === 'spp') return 'Sede San Pedro de la Paz';
-  return codigo;
-};
+async function consultarCitas(): Promise<CitaListado[]> {
+  const respuesta = await fetch(`${API_URL}/api/citas`);
+  const datos = (await respuesta.json()) as {
+    citas?: CitaListado[];
+    error?: string;
+  };
+
+  if (!respuesta.ok) {
+    throw new Error(
+      datos.error || 'No se pudo cargar la base de datos de citas.',
+    );
+  }
+
+  return datos.citas ?? [];
+}
 
 /**
  * Pantalla para consultar la tabla de citas agendadas actualmente.
  */
 export function TablaCitas({ alVolver }: PropsTablaCitas) {
-  const [citas, setCitas] = useState<CitaListado[]>([]);
-  const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const consultarCitas = async () => {
-    const respuesta = await fetch(`${API_URL}/api/citas`);
-    const datos = (await respuesta.json()) as {
-      citas?: CitaListado[];
-      error?: string;
-    };
-
-    if (!respuesta.ok) {
-      throw new Error(datos.error || 'No se pudo cargar la base de datos de citas.');
-    }
-
-    return datos.citas ?? [];
-  };
-
-  useEffect(() => {
-    let cancelado = false;
-
-    const cargar = async () => {
-      try {
-        const lista = await consultarCitas();
-        if (!cancelado) {
-          setCitas(lista);
-          setError(null);
-        }
-      } catch (err) {
-        if (!cancelado) {
-          setError(
-            err instanceof Error
-              ? err.message
-              : 'Error al consultar la base de datos de citas.',
-          );
-        }
-      } finally {
-        if (!cancelado) {
-          setCargando(false);
-        }
-      }
-    };
-
-    void cargar();
-    return () => {
-      cancelado = true;
-    };
-  }, []);
-
-  const manejarActualizar = async () => {
-    setCargando(true);
-    setError(null);
-    try {
-      const lista = await consultarCitas();
-      setCitas(lista);
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Error al consultar la base de datos de citas.',
-      );
-    } finally {
-      setCargando(false);
-    }
-  };
+  const {
+    items: citas,
+    cargando,
+    error,
+    actualizar,
+  } = useConsultaLista<CitaListado>(
+    consultarCitas,
+    'Error al consultar la base de datos de citas.',
+  );
 
   return (
     <section className="seleccion-perfil seleccion-perfil--tabla">
@@ -108,7 +61,7 @@ export function TablaCitas({ alVolver }: PropsTablaCitas) {
           </div>
           <button
             type="button"
-            onClick={manejarActualizar}
+            onClick={() => void actualizar()}
             className="boton boton--neutro-borde"
             disabled={cargando}
           >
@@ -146,7 +99,7 @@ export function TablaCitas({ alVolver }: PropsTablaCitas) {
                 {citas.map((cita) => (
                   <tr key={cita.id}>
                     <td>{cita.rut}</td>
-                    <td>{obtenerNombreSede(cita.sede)}</td>
+                    <td>{obtenerNombreSede(cita.sede, cita.sede)}</td>
                     <td>{cita.fecha}</td>
                     <td>{cita.hora}</td>
                     <td>

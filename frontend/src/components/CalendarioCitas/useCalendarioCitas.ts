@@ -2,52 +2,29 @@
 
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { API_URL } from '@/lib/constantes';
+import {
+  calcularFechaMinima,
+  type CitaActiva,
+  type DisponibilidadCitas,
+  esHoraPasada,
+  formatearFechaIsoLocal,
+  HORARIOS_DISPONIBLES,
+  type SlotDisponibilidad,
+  type TipoAccionCita,
+} from './calendarioCitas.utils';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
-export type TipoAccionCita = 'crear' | 'editar' | 'cancelar';
-
-export interface CitaActiva {
-  id: number;
-  sede: string;
-  fechaSeleccionada: Date;
-  horaSeleccionada: string;
-}
-
-export const HORARIOS_DISPONIBLES = [
-  '09:00',
-  '10:00',
-  '11:30',
-  '14:00',
-  '15:30',
-] as const;
-
-/**
- * Determina si un bloque horario ya transcurrió para la fecha dada.
- */
-export const esHoraPasada = (
-  fecha: Date,
-  hora: string,
-  fechaReferencia: Date = new Date(),
-): boolean => {
-  const [horas, minutos] = hora.split(':').map(Number);
-  const fechaHoraBloque = new Date(fecha);
-  fechaHoraBloque.setHours(horas, minutos, 0, 0);
-  return fechaHoraBloque.getTime() <= fechaReferencia.getTime();
+export {
+  calcularFechaMinima,
+  esHoraPasada,
+  formatearFechaIsoLocal,
+  HORARIOS_DISPONIBLES,
 };
-
-const calcularFechaMinima = (fechaMinima?: string | null): Date => {
-  const hoy = new Date();
-  hoy.setHours(0, 0, 0, 0);
-  if (!fechaMinima) return hoy;
-  const fechaParseada = new Date(`${fechaMinima}T00:00:00`);
-  if (
-    Number.isNaN(fechaParseada.getTime()) ||
-    fechaParseada.getTime() <= hoy.getTime()
-  ) {
-    return hoy;
-  }
-  return fechaParseada;
+export type {
+  CitaActiva,
+  DisponibilidadCitas,
+  SlotDisponibilidad,
+  TipoAccionCita,
 };
 
 /**
@@ -58,17 +35,43 @@ export const useCalendarioCitas = (
   rutDonante?: string,
   fechaMinima?: string | null,
 ) => {
-  const fechaMinimaPermitida = calcularFechaMinima(fechaMinima);
+  const [ahora, setAhora] = useState<Date>(() => new Date());
+  const [disponibilidad, setDisponibilidad] =
+    useState<DisponibilidadCitas | null>(null);
+  const [versionDisponibilidad, setVersionDisponibilidad] = useState<number>(0);
+
+  const fechaMinimaServidor =
+    disponibilidad?.elegible && disponibilidad.fechaMinimaDisponible
+      ? disponibilidad.fechaMinimaDisponible
+      : null;
+
+  const fechaMinimaCombinada = (() => {
+    if (!fechaMinima) return fechaMinimaServidor;
+    if (!fechaMinimaServidor) return fechaMinima;
+    return fechaMinimaServidor > fechaMinima ? fechaMinimaServidor : fechaMinima;
+  })();
+
+  const fechaMinimaPermitida = calcularFechaMinima(fechaMinimaCombinada, ahora);
+  const fechaMinimaEfectivaStr = formatearFechaIsoLocal(fechaMinimaPermitida);
+
   const [fechaSeleccionadaCruda, setFechaSeleccionada] = useState<Date>(() =>
     calcularFechaMinima(fechaMinima),
   );
+  const diasSinCuposSet = new Set(disponibilidad?.diasSinCupos ?? []);
+
   const fechaSeleccionada = (() => {
     const sinHora = new Date(fechaSeleccionadaCruda);
     sinHora.setHours(0, 0, 0, 0);
-    return sinHora.getTime() < fechaMinimaPermitida.getTime()
-      ? fechaMinimaPermitida
-      : fechaSeleccionadaCruda;
+    if (sinHora.getTime() < fechaMinimaPermitida.getTime()) {
+      return fechaMinimaPermitida;
+    }
+    if (diasSinCuposSet.has(formatearFechaIsoLocal(sinHora))) {
+      return fechaMinimaPermitida;
+    }
+    return fechaSeleccionadaCruda;
   })();
+
+  const fechaSeleccionadaStr = formatearFechaIsoLocal(fechaSeleccionada);
   const [sede, setSede] = useState<string>('');
   const [horaSeleccionada, setHoraSeleccionada] = useState<string>('');
   const [mostrarModal, setMostrarModal] = useState<boolean>(false);
@@ -76,13 +79,56 @@ export const useCalendarioCitas = (
   const [accionActual, setAccionActual] = useState<TipoAccionCita>('crear');
   const [citaActiva, setCitaActiva] = useState<CitaActiva | null>(citaInicial);
 
-  // Reloj interno actualizado periódicamente para desactivar bloques pasados del día de hoy.
-  const [ahora, setAhora] = useState<Date>(() => new Date());
-
   useEffect(() => {
     const intervalId = setInterval(() => setAhora(new Date()), 30000);
     return () => clearInterval(intervalId);
   }, []);
+
+  useEffect(() => {
+    if (citaActiva && accionActual !== 'editar') {
+      return;
+    }
+
+    let cancelado = false;
+    const consultarDisponibilidad = async () => {
+      try {
+        const parametros = new URLSearchParams();
+        if (rutDonante) {
+          parametros.set('rut', rutDonante);
+        }
+        if (sede) {
+          parametros.set('sede', sede);
+        }
+        parametros.set('fecha', fechaSeleccionadaStr);
+        if (accionActual === 'editar' && citaActiva?.id) {
+          parametros.set('excluirCitaId', String(citaActiva.id));
+        }
+
+        const respuesta = await fetch(
+          `${API_URL}/api/citas/disponibilidad?${parametros.toString()}`,
+        );
+        if (!respuesta.ok) return;
+        const datos = (await respuesta.json()) as DisponibilidadCitas;
+        if (!cancelado) {
+          setDisponibilidad(datos);
+        }
+      } catch {
+        // Si falla la consulta de disponibilidad, se mantiene el cálculo local
+      }
+    };
+
+    void consultarDisponibilidad();
+    return () => {
+      cancelado = true;
+    };
+  }, [
+    rutDonante,
+    sede,
+    fechaSeleccionadaStr,
+    accionActual,
+    citaActiva,
+    versionDisponibilidad,
+  ]);
 
   useEffect(() => {
     if (!rutDonante || citaInicial) return;
@@ -122,14 +168,54 @@ export const useCalendarioCitas = (
     };
   }, [rutDonante, citaInicial]);
 
-  const esHoraBloqueada = (hora: string): boolean =>
-    esHoraPasada(fechaSeleccionada, hora, ahora);
+  const obtenerSlotServidor = (hora: string): SlotDisponibilidad | undefined => {
+    if (
+      !disponibilidad?.elegible ||
+      disponibilidad.fechaConsultada !== fechaSeleccionadaStr
+    ) {
+      return undefined;
+    }
+    return disponibilidad.slotsFechaConsultada?.find(
+      (slot) => slot.hora === hora,
+    );
+  };
+
+  const esHoraBloqueada = (hora: string): boolean => {
+    if (esHoraPasada(fechaSeleccionada, hora, ahora)) {
+      return true;
+    }
+    const slotServidor = obtenerSlotServidor(hora);
+    return slotServidor ? !slotServidor.disponible : false;
+  };
+
+  const obtenerMotivoBloqueoHora = (hora: string): string | undefined => {
+    if (esHoraPasada(fechaSeleccionada, hora, ahora)) {
+      return 'Este horario ya pasó';
+    }
+    const slotServidor = obtenerSlotServidor(hora);
+    if (slotServidor && !slotServidor.disponible) {
+      return 'Sin cupos disponibles en este horario';
+    }
+    return undefined;
+  };
+
+  const esDiaDeshabilitado = (fecha: Date, vista: string): boolean => {
+    if (vista !== 'month') {
+      return false;
+    }
+    return diasSinCuposSet.has(formatearFechaIsoLocal(fecha));
+  };
 
   const manejarCambioDeFecha = (valor: unknown) => {
     if (valor instanceof Date) {
       setFechaSeleccionada(valor);
       setHoraSeleccionada('');
     }
+  };
+
+  const manejarCambioDeSede = (nuevaSede: string) => {
+    setSede(nuevaSede);
+    setHoraSeleccionada('');
   };
 
   const confirmarCita = async () => {
@@ -141,9 +227,7 @@ export const useCalendarioCitas = (
       try {
         const respuesta = await fetch(
           `${API_URL}/api/citas/${citaActiva.id}`,
-          {
-            method: 'DELETE',
-          },
+          { method: 'DELETE' },
         );
 
         if (!respuesta.ok) {
@@ -154,6 +238,7 @@ export const useCalendarioCitas = (
         toast.success('Cita cancelada con éxito');
         setCitaActiva(null);
         setAccionActual('crear');
+        setVersionDisponibilidad((v) => v + 1);
       } catch (error) {
         const mensaje =
           error instanceof Error ? error.message : 'Error al cancelar la cita';
@@ -168,22 +253,28 @@ export const useCalendarioCitas = (
         return;
       }
 
-      if (esHoraPasada(fechaSeleccionada, horaSeleccionada)) {
+      if (esHoraBloqueada(horaSeleccionada)) {
         toast.error(
-          'Esa hora ya pasó. Por favor, selecciona un horario aún disponible.',
+          'Ese horario ya no está disponible. Por favor, selecciona otro.',
         );
         setHoraSeleccionada('');
         setMostrarModal(false);
         return;
       }
 
-      const desfaseHorario = fechaSeleccionada.getTimezoneOffset() * 60000;
-      const fechaLocal = new Date(fechaSeleccionada.getTime() - desfaseHorario);
-      const fechaFormateada = fechaLocal.toISOString().split('T')[0];
+      const fechaFormateada = formatearFechaIsoLocal(fechaSeleccionada);
 
       if (fechaMinima && fechaFormateada < fechaMinima) {
         toast.error(
           `Estás diferido temporalmente. Solo puedes agendar citas desde el ${fechaMinima}.`,
+        );
+        setMostrarModal(false);
+        return;
+      }
+
+      if (fechaFormateada < fechaMinimaEfectivaStr) {
+        toast.error(
+          `No hay cupos disponibles para esa fecha. La fecha mínima es ${fechaMinimaEfectivaStr}.`,
         );
         setMostrarModal(false);
         return;
@@ -224,9 +315,7 @@ export const useCalendarioCitas = (
         );
 
         const idCita =
-          esEdicion && citaActiva
-            ? citaActiva.id
-            : (datos.cita?.id ?? 0);
+          esEdicion && citaActiva ? citaActiva.id : (datos.cita?.id ?? 0);
 
         setCitaActiva({
           id: idCita,
@@ -235,10 +324,12 @@ export const useCalendarioCitas = (
           horaSeleccionada,
         });
         setAccionActual('crear');
+        setVersionDisponibilidad((v) => v + 1);
       } catch (error) {
         const mensaje =
           error instanceof Error ? error.message : 'Error al procesar la cita';
         toast.error(mensaje);
+        setVersionDisponibilidad((v) => v + 1);
       }
     }
 
@@ -263,11 +354,20 @@ export const useCalendarioCitas = (
     setMostrarModal(true);
   };
 
+  const hoyIso = formatearFechaIsoLocal(ahora);
+  const fechaBaseLocal =
+    fechaMinima && fechaMinima > hoyIso ? fechaMinima : hoyIso;
+  const avanzadaPorDisponibilidad = Boolean(
+    (disponibilidad?.elegible && disponibilidad.avanzadaPorDisponibilidad) ||
+      fechaMinimaEfectivaStr > fechaBaseLocal,
+  );
+
   return {
     fechaSeleccionada,
     setFechaSeleccionada,
     sede,
     setSede,
+    manejarCambioDeSede,
     horaSeleccionada,
     setHoraSeleccionada,
     mostrarModal,
@@ -277,8 +377,11 @@ export const useCalendarioCitas = (
     citaActiva,
     setCitaActiva,
     fechaMinimaPermitida,
+    avanzadaPorDisponibilidad,
     horariosDisponibles: HORARIOS_DISPONIBLES,
     esHoraBloqueada,
+    obtenerMotivoBloqueoHora,
+    esDiaDeshabilitado,
     manejarCambioDeFecha,
     manejarReagendamiento,
     confirmarCita,

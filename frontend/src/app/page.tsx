@@ -13,8 +13,7 @@ import { RegistroDonante } from '@/components/SeleccionPerfil/RegistroDonante';
 import { SeleccionPerfil } from '@/components/SeleccionPerfil/SeleccionPerfil';
 import { TablaCitas } from '@/components/SeleccionPerfil/TablaCitas';
 import { TablaDonantes } from '@/components/SeleccionPerfil/TablaDonantes';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+import { API_URL } from '@/lib/constantes';
 
 type VistaActual =
   | 'seleccion-perfil'

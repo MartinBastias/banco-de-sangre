@@ -2,10 +2,11 @@
 
 import Calendar from 'react-calendar';
 import { Toaster } from 'react-hot-toast';
-import {
-  type CitaActiva,
-  useCalendarioCitas,
-} from './useCalendarioCitas';
+import { SEDES } from '@/lib/constantes';
+import type { CitaActiva } from './calendarioCitas.utils';
+import { ModalConfirmacionCita } from './ModalConfirmacionCita';
+import { TarjetaCitaActiva } from './TarjetaCitaActiva';
+import { useCalendarioCitas } from './useCalendarioCitas';
 import 'react-calendar/dist/Calendar.css';
 import './CalendarioCitas.css';
 
@@ -14,12 +15,6 @@ export interface PropsCalendarioCitas {
   rut?: string;
   fechaMinima?: string | null;
 }
-
-const obtenerNombreSede = (codigo: string): string => {
-  if (codigo === 'cpp') return 'Sede Concepción';
-  if (codigo === 'spp') return 'Sede San Pedro de la Paz';
-  return '';
-};
 
 /**
  * Componente interactivo para agendar, reagendar y cancelar citas de donación.
@@ -33,6 +28,7 @@ export function CalendarioCitas({
     fechaSeleccionada,
     sede,
     setSede,
+    manejarCambioDeSede,
     horaSeleccionada,
     setHoraSeleccionada,
     mostrarModal,
@@ -41,8 +37,11 @@ export function CalendarioCitas({
     setAccionActual,
     citaActiva,
     fechaMinimaPermitida,
+    avanzadaPorDisponibilidad,
     horariosDisponibles,
     esHoraBloqueada,
+    obtenerMotivoBloqueoHora,
+    esDiaDeshabilitado,
     manejarCambioDeFecha,
     manejarReagendamiento,
     confirmarCita,
@@ -64,36 +63,11 @@ export function CalendarioCitas({
 
       <div className="calendario-citas agenda">
         {citaActiva && accionActual !== 'editar' ? (
-          <div className="cita-activa">
-            <h3>Tu Cita Activa</h3>
-            <p>
-              <strong>Sede:</strong> {obtenerNombreSede(citaActiva.sede)}
-            </p>
-            <p>
-              <strong>Fecha:</strong>{' '}
-              {citaActiva.fechaSeleccionada.toLocaleDateString('es-CL')}
-            </p>
-            <p>
-              <strong>Hora:</strong> {citaActiva.horaSeleccionada}
-            </p>
-
-            <div className="acciones">
-              <button
-                type="button"
-                onClick={() => abrirModal('cancelar')}
-                className="boton boton--flex-1 boton--peligro-borde"
-              >
-                Cancelar Cita
-              </button>
-              <button
-                type="button"
-                onClick={manejarReagendamiento}
-                className="boton boton--flex-1 boton--advertencia"
-              >
-                Reagendar
-              </button>
-            </div>
-          </div>
+          <TarjetaCitaActiva
+            citaActiva={citaActiva}
+            alCancelar={() => abrirModal('cancelar')}
+            alReagendar={manejarReagendamiento}
+          />
         ) : (
           <>
             <div className="campo-sede">
@@ -101,12 +75,15 @@ export function CalendarioCitas({
               <select
                 id="sede"
                 value={sede}
-                onChange={(e) => setSede(e.target.value)}
+                onChange={(e) => manejarCambioDeSede(e.target.value)}
                 className="select-sede"
               >
                 <option value="">-- Elige una sede --</option>
-                <option value="cpp">Sede Concepción</option>
-                <option value="spp">Sede San Pedro de la Paz</option>
+                {SEDES.map((item) => (
+                  <option key={item.codigo} value={item.codigo}>
+                    {item.nombre}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -118,11 +95,19 @@ export function CalendarioCitas({
               </p>
             )}
 
+            {!fechaMinima && avanzadaPorDisponibilidad && (
+              <p className="aviso-sin-horarios" role="status">
+                No quedan horarios disponibles en tu fecha base. Próxima fecha
+                disponible: {fechaMinimaPermitida.toLocaleDateString('es-CL')}.
+              </p>
+            )}
+
             <p className="texto-dia">Selecciona un día:</p>
             <Calendar
               onChange={manejarCambioDeFecha}
               value={fechaSeleccionada}
               minDate={fechaMinimaPermitida}
+              tileDisabled={({ date, view }) => esDiaDeshabilitado(date, view)}
             />
 
             <div className="horarios-titulo">
@@ -146,7 +131,11 @@ export function CalendarioCitas({
                         type="button"
                         onClick={() => setHoraSeleccionada(hora)}
                         disabled={bloqueado}
-                        title={bloqueado ? 'Este horario ya pasó' : undefined}
+                        title={
+                          bloqueado
+                            ? obtenerMotivoBloqueoHora(hora)
+                            : undefined
+                        }
                         className={`horario${seleccionado ? ' horario--seleccionado' : ''}`}
                       >
                         {hora}
@@ -188,63 +177,15 @@ export function CalendarioCitas({
       </div>
 
       {mostrarModal && (
-        <div className="modal-superposicion">
-          <div className="modal-contenido">
-            <h3>
-              {accionActual === 'cancelar'
-                ? 'Cancelar Cita'
-                : 'Resumen de tu Cita'}
-            </h3>
-
-            {accionActual === 'cancelar' ? (
-              <p>
-                ¿Estás seguro de que deseas cancelar tu cita para el{' '}
-                <strong>
-                  {(citaActiva?.fechaSeleccionada || new Date()).toLocaleDateString(
-                    'es-CL',
-                  )}
-                </strong>{' '}
-                a las <strong>{citaActiva?.horaSeleccionada}</strong>?
-              </p>
-            ) : (
-              <>
-                <p>
-                  <strong>Sede:</strong> {obtenerNombreSede(sede)}
-                </p>
-                <p>
-                  <strong>Fecha:</strong>{' '}
-                  {fechaSeleccionada.toLocaleDateString('es-CL')}
-                </p>
-                <p>
-                  <strong>Hora:</strong> {horaSeleccionada}
-                </p>
-              </>
-            )}
-
-            <div className="acciones acciones--modal">
-              <button
-                type="button"
-                onClick={() => setMostrarModal(false)}
-                className="boton boton--flex-1 boton--neutro-borde"
-              >
-                {accionActual === 'cancelar' ? 'Volver' : 'Cancelar'}
-              </button>
-              <button
-                type="button"
-                onClick={confirmarCita}
-                className={`boton boton--flex-1 ${
-                  accionActual === 'cancelar'
-                    ? 'boton--peligro-solido'
-                    : 'boton--primario'
-                }`}
-              >
-                {accionActual === 'cancelar'
-                  ? 'Sí, Cancelar'
-                  : 'Confirmar Reserva'}
-              </button>
-            </div>
-          </div>
-        </div>
+        <ModalConfirmacionCita
+          accionActual={accionActual}
+          citaActiva={citaActiva}
+          sede={sede}
+          fechaSeleccionada={fechaSeleccionada}
+          horaSeleccionada={horaSeleccionada}
+          alCerrar={() => setMostrarModal(false)}
+          alConfirmar={confirmarCita}
+        />
       )}
     </>
   );

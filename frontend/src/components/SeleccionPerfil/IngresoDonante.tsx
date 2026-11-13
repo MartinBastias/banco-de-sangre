@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import { API_URL } from '@/lib/constantes';
+import { esRutValido, formatearRut } from '@/lib/rut';
 import './SeleccionPerfil.css';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export interface PropsIngresoDonante {
   alVerificarExitoso: (rut: string) => void;
@@ -28,8 +28,10 @@ export function IngresoDonante({
     setError(null);
 
     const rutLimpio = rut.trim();
-    if (!rutLimpio) {
-      setError('Debes ingresar tu RUT para continuar.');
+    if (!esRutValido(rutLimpio)) {
+      setError(
+        'Debes ingresar un RUT válido (ej: 12.345.678-5 o 11.111.112-K).',
+      );
       return;
     }
 
@@ -89,8 +91,8 @@ export function IngresoDonante({
               id="rut-donante"
               type="text"
               value={rut}
-              onChange={(e) => setRut(e.target.value)}
-              placeholder="Ej: 12345678-9"
+              onChange={(e) => setRut(formatearRut(e.target.value))}
+              placeholder="Ej: 12.345.678-5"
               className="entrada-texto"
               disabled={verificando}
             />
