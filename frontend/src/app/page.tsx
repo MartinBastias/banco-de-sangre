@@ -9,6 +9,7 @@ import {
 } from '@/components/EstadoElegibilidad/estadoElegibilidad.utils';
 import { IngresoDonante } from '@/components/SeleccionPerfil/IngresoDonante';
 import { MenuEnfermero } from '@/components/SeleccionPerfil/MenuEnfermero';
+import { RegistroDonacion } from '@/components/SeleccionPerfil/RegistroDonacion';
 import { RegistroDonante } from '@/components/SeleccionPerfil/RegistroDonante';
 import { SeleccionPerfil } from '@/components/SeleccionPerfil/SeleccionPerfil';
 import { TablaCitas } from '@/components/SeleccionPerfil/TablaCitas';
@@ -20,6 +21,7 @@ type VistaActual =
   | 'enfermero-menu'
   | 'enfermero-ficha'
   | 'enfermero-donantes'
+  | 'enfermero-donacion'
   | 'enfermero-citas'
   | 'identificacion-donante'
   | 'agendar-cita';
@@ -126,6 +128,7 @@ export default function PaginaInicio() {
         <MenuEnfermero
           alIrAFichaMedica={() => setVista('enfermero-ficha')}
           alIrADonantes={() => setVista('enfermero-donantes')}
+          alIrARegistrarDonacion={() => setVista('enfermero-donacion')}
           alIrACitas={() => setVista('enfermero-citas')}
           alVolver={() => volverASeleccionPerfil()}
         />
@@ -151,6 +154,17 @@ export default function PaginaInicio() {
           <h1 style={{ textAlign: 'center' }}>Portal de Enfermero</h1>
         </header>
         <TablaDonantes alVolver={() => setVista('enfermero-menu')} />
+      </main>
+    );
+  }
+
+  if (vista === 'enfermero-donacion') {
+    return (
+      <main>
+        <header>
+          <h1 style={{ textAlign: 'center' }}>Portal de Enfermero</h1>
+        </header>
+        <RegistroDonacion alVolver={() => setVista('enfermero-menu')} />
       </main>
     );
   }

@@ -5,16 +5,18 @@ import './SeleccionPerfil.css';
 export interface PropsMenuEnfermero {
   alIrAFichaMedica: () => void;
   alIrADonantes: () => void;
+  alIrARegistrarDonacion: () => void;
   alIrACitas: () => void;
   alVolver: () => void;
 }
 
 /**
- * Menú principal del perfil de enfermero con acceso a las 3 vistas operativas.
+ * Menú principal del perfil de enfermero con acceso a las 4 vistas operativas.
  */
 export function MenuEnfermero({
   alIrAFichaMedica,
   alIrADonantes,
+  alIrARegistrarDonacion,
   alIrACitas,
   alVolver,
 }: PropsMenuEnfermero) {
@@ -49,6 +51,21 @@ export function MenuEnfermero({
           </span>
           <span className="seleccion-perfil__opcion-descripcion">
             Ver la tabla de donantes registrados junto con su estado clínico.
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={alIrARegistrarDonacion}
+          className="seleccion-perfil__opcion"
+        >
+          <span className="seleccion-perfil__opcion-titulo">
+            Registrar extracción de sangre
+          </span>
+          <span className="seleccion-perfil__opcion-descripcion">
+            Ingresar una donación exitosa seleccionando un donante registrado y
+            los ml extraídos (el tipo de sangre proviene de su ficha médica y el
+            ID de bolsa se genera automáticamente).
           </span>
         </button>
 

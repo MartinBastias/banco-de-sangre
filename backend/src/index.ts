@@ -1,6 +1,7 @@
 import cors from 'cors';
 import express from 'express';
 import rutasCitas from './features/citas/citas.routes.ts';
+import rutasDonaciones from './features/donaciones/donaciones.routes.ts';
 import rutasDonantes from './features/donantes/donantes.routes.ts';
 import rutasElegibilidad from './features/elegibilidad/elegibilidad.routes.ts';
 import rutasFichaMedica from './features/ficha-medica/ficha-medica.routes.ts';
@@ -12,6 +13,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use('/api', rutasCitas);
+app.use('/api', rutasDonaciones);
 app.use('/api', rutasDonantes);
 app.use('/api', rutasFichaMedica);
 app.use('/api/donantes', rutasElegibilidad);
