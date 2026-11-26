@@ -155,3 +155,18 @@ export async function eliminarCitasAgendadasPorRutDB(
 
   return eliminadas.length;
 }
+
+/**
+ * Marca como realizadas todas las citas agendadas activas asociadas a un RUT.
+ */
+export async function marcarCitaRealizadaPorRutDB(
+  rut: string,
+): Promise<boolean> {
+  const actualizadas = await db
+    .update(citas)
+    .set({ estado: 'realizada' })
+    .where(and(eq(citas.rut, rut), eq(citas.estado, 'agendada')))
+    .returning({ id: citas.id });
+
+  return actualizadas.length > 0;
+}

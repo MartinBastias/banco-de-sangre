@@ -52,3 +52,29 @@ export const fichasMedicas = pgTable(
     ),
   ],
 );
+
+export const donaciones = pgTable(
+  'donaciones',
+  {
+    id: integer('id').generatedByDefaultAsIdentity().primaryKey(),
+    rut: text('rut')
+      .notNull()
+      .references(() => donantes.rut),
+    idBolsa: text('id_bolsa').notNull().unique(),
+    tipoSangre: text('tipo_sangre').notNull(),
+    mlExtraidos: integer('ml_extraidos').notNull(),
+    fechaDonacion: timestamp('fecha_donacion', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    check(
+      'donaciones_ml_extraidos_check',
+      sql`${table.mlExtraidos} >= 50 AND ${table.mlExtraidos} <= 1000`,
+    ),
+    check(
+      'donaciones_tipo_sangre_check',
+      sql`${table.tipoSangre} IN ('O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-')`,
+    ),
+  ],
+);
